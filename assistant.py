@@ -77,11 +77,13 @@ class Assistant:
     is_working = now_tw_hour >= 8 and now_tw_hour <=18
 
     while True:
+      now_tw = self.get_now_tw()
       try:
         self.client104.login()
+        print('login successfully!!', now_tw)
       except Exception as error:
-        bot.send_msg(f'!!Warning!! {error}')
-      now_tw = self.get_now_tw()
+        bot.send_msg(f'!!LOGIN FAIL!! {error}')
+  
       today_tw = now_tw.date()
       is_workday = self.check_is_workday(today_tw)
 
@@ -91,9 +93,10 @@ class Assistant:
         if should_check_in or should_check_out:
           try:
             self.client104.check_in()
+            print('check in successfully!!')
             is_working = not is_working
           except Exception as error:
-            bot.send_msg(f'!!Warning!! {error}')
+            bot.send_msg(f'!!CHECK IN FAIL!! {error}')
       
       time.sleep(300)
 
