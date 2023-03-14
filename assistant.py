@@ -6,6 +6,7 @@ import time
 
 class Assistant:
   def __init__(self):
+    self.bot = Telegram_Bot()
     self.client104 = Client104()
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
     self.national_holidays = set([
@@ -23,6 +24,10 @@ class Assistant:
       date(2024, 1, 1),
     ])
 
+  def bot_send_message(self, msg):
+    self.bot.send_msg(msg)
+    print(msg)
+
   def convert_date_str_to_datetime(self, date_str):
     date_parts = date_str.split('/')
     if len(date_parts) < 3:
@@ -35,7 +40,7 @@ class Assistant:
   def parse_summary_text_to_date_list(self, summary_text):
     start_date_str = summary_text.split(' ')[0]
     start_date = self.convert_date_str_to_datetime(start_date_str)
-    end_date_str = summary_text.split('~ ')[1].split(' ')[0]
+    end_date_str = summary_text.split('~ ')[1].split(' ')[0] if len(summary_text.split('~ ')) > 1 and len(summary_text.split('~ ')[1].split(' ')) > 0 else start_date_str
     end_date = self.convert_date_str_to_datetime(end_date_str) or start_date
 
     date_list = []
@@ -56,9 +61,9 @@ class Assistant:
     return OoO_list
   
   def check_is_OoO(self, today):
-    inProgressForms = self.client104.get_in_progress_form_list()
+    inProgressForms = self.client104.get_in_progress_OoO_form_list()
     inProgressOoODateList = self.get_OoO_date_list_from_forms(inProgressForms)
-    finishedForms = self.client104.get_finished_form_list()
+    finishedForms = self.client104.get_finished_OoO_form_list()
     finishedOoODateList = self.get_OoO_date_list_from_forms(finishedForms)
     overallOoODateList = inProgressOoODateList.union(finishedOoODateList)
     return today in overallOoODateList
@@ -70,19 +75,33 @@ class Assistant:
   def get_now_tw(self):
     now_utc = datetime.now(pytz.utc)
     return now_utc.astimezone(self.taiwan_tz)
+  
+  def login(self, time):
+    try:
+      self.client104.login()
+      print('login successfully!!', time.strftime("%Y/%m/%d %a %H:%M:%S"))
+    except Exception as error:
+      self.bot_send_message(f'LOGIN FAIL!! {error}')
+
+  def check_in_or_check_out(self, time, is_check_in_type):
+    try:
+      self.client104.check_in()
+      if is_check_in_type:
+        self.bot_send_message(f'check in at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
+      else:
+        self.bot_send_message(f'check out at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
+      is_working = not is_working
+    except Exception as error:
+      self.bot_send_message(f'CHECK IN FAIL!! {error}')
     
   def main(self):
-    bot = Telegram_Bot()
     now_tw_hour = self.get_now_tw().hour
     is_working = now_tw_hour >= 8 and now_tw_hour <=18
+    self.bot_send_message(f'Hi, your 104 assistant has started work at {self.get_now_tw().strftime("%Y/%m/%d %a %H:%M:%S")}')
 
     while True:
       now_tw = self.get_now_tw()
-      try:
-        self.client104.login()
-        print('login successfully!!', now_tw)
-      except Exception as error:
-        bot.send_msg(f'!!LOGIN FAIL!! {error}')
+      self.login(now_tw)
   
       today_tw = now_tw.date()
       is_workday = self.check_is_workday(today_tw)
@@ -91,14 +110,13 @@ class Assistant:
         should_check_in = not is_working and now_tw.hour == 8
         should_check_out = is_working and now_tw.hour == 18
         if should_check_in or should_check_out:
-          try:
-            self.client104.check_in()
-            print('check in successfully!!')
-            is_working = not is_working
-          except Exception as error:
-            bot.send_msg(f'!!CHECK IN FAIL!! {error}')
+          self.check_in_or_check_out(now_tw, should_check_in)
       
       time.sleep(300)
 
-  if __name__ == '__main__':
-    main()
+if __name__ == '__main__':
+  try:
+    assistant = Assistant()
+    assistant.main()
+  except Exception as error:
+    assistant.bot_send_message(f'SOMETHING WRONG!! {error}')

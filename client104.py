@@ -31,26 +31,29 @@ class Client104:
     }
     requests.post(cardUrl, headers=cardHeaders, json=cardBody)
 
-  def get_in_progress_form_list(self):
+  def is_OoO_request_form(self, form):
+    return form['formCode'] == 101
+
+  def get_in_progress_OoO_form_list(self):
     getInProgressFormUrl = f'{self.domain}/prohrm/api/app/trackForm/inProgress/self'
     getFormHeaders = {
       "Authorization" : f"Bearer {self.jwt}",
     }
     getFormBody = {
-      "limit": 5,
+      "limit": 10,
       "offset": 0,
     }
     response = requests.post(getInProgressFormUrl, headers=getFormHeaders, json=getFormBody)
-    return response.json()['data']
+    return filter(self.is_OoO_request_form, response.json()['data'])
   
-  def get_finished_form_list(self):
+  def get_finished_OoO_form_list(self):
     getFinishedFormUrl = f'{self.domain}/prohrm/api/app/trackForm/finished/self'
     getFormHeaders = {
       "Authorization" : f"Bearer {self.jwt}",
     }
     getFormBody = {
-      "limit": 5,
+      "limit": 10,
       "offset": 0,
     }
     response = requests.post(getFinishedFormUrl, headers=getFormHeaders, json=getFormBody)
-    return response.json()['data']
+    return filter(self.is_OoO_request_form, response.json()['data'])
