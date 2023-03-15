@@ -90,7 +90,6 @@ class Assistant:
         self.bot_send_message(f'check in at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
       else:
         self.bot_send_message(f'check out at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
-      is_working = not is_working
     except Exception as error:
       self.bot_send_message(f'CHECK IN FAIL!! {error}')
     
@@ -111,6 +110,7 @@ class Assistant:
         should_check_out = is_working and now_tw.hour == 18
         if should_check_in or should_check_out:
           self.check_in_or_check_out(now_tw, should_check_in)
+          is_working = not is_working
       
       time.sleep(300)
 
