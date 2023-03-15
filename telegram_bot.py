@@ -1,10 +1,14 @@
 import requests
+import os
 
 class Telegram_Bot:
   def __init__(self):
-    self.bot_token = '6022810965:AAGxuKkqMuJ2OYLlbJa8CtzYCIdPE9XSYAU'
-    self.chat_id = 1952480116
+    self.bot_token = os.getenv('TELEGRAM_BOT_TOKEN')
+    self.chat_id = os.getenv('TELEGRAM_CHAT_ID')
 
   def send_msg(self, msg):
-    self.url = f'https://api.telegram.org/bot{self.bot_token}/sendMessage?chat_id={self.chat_id}&text={msg}'
-    requests.get(self.url).json()
+    try:
+      self.url = f'https://api.telegram.org/bot{self.bot_token}/sendMessage?chat_id={self.chat_id}&text={msg}'
+      requests.get(self.url).json()
+    except Exception as error:
+      print(f'SEND TELEGRAM MSG FAIL!! {error}')

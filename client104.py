@@ -8,8 +8,8 @@ class Client104:
 
   def login(self):
     loginUrl = f'{self.domain}/prohrm/api/login/token'
-    acc = os.environ.get('ACC')
-    pwd = os.environ.get('PWD')
+    acc = os.getenv('ACC')
+    pwd = os.getenv('PPP')
     loginBody = {
       "uno": "52621439",
       "acc": acc,

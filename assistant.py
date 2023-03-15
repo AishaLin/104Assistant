@@ -1,12 +1,15 @@
 from datetime import datetime, date, timedelta
 import pytz
 from telegram_bot import Telegram_Bot
+from slack_bot import Slack_Bot
 from client104 import Client104
 import time
+import os
 
 class Assistant:
   def __init__(self):
-    self.bot = Telegram_Bot()
+    self.telegram_bot = Telegram_Bot()
+    self.slack_bot = Slack_Bot()
     self.client104 = Client104()
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
     self.national_holidays = set([
@@ -25,8 +28,12 @@ class Assistant:
     ])
 
   def bot_send_message(self, msg):
-    self.bot.send_msg(msg)
     print(msg)
+    if os.getenv('TELEGRAM_BOT_TOKEN') and os.getenv('TELEGRAM_CHAT_ID'):
+      self.telegram_bot.send_msg(msg)
+    if os.getenv('SLACK_WEBHOOK_URL'):
+      self.slack_bot.send_msg(msg)
+    
 
   def convert_date_str_to_datetime(self, date_str):
     date_parts = date_str.split('/')
@@ -83,7 +90,7 @@ class Assistant:
     except Exception as error:
       self.bot_send_message(f'LOGIN FAIL!! {error}')
 
-  def check_in_or_check_out(self, time, is_check_in_type):
+  def check_in_check_out(self, time, is_check_in_type):
     try:
       self.client104.check_in()
       if is_check_in_type:
@@ -109,7 +116,7 @@ class Assistant:
         should_check_in = not is_working and now_tw.hour == 8
         should_check_out = is_working and now_tw.hour == 18
         if should_check_in or should_check_out:
-          self.check_in_or_check_out(now_tw, should_check_in)
+          self.check_in_check_out(now_tw, should_check_in)
           is_working = not is_working
       
       time.sleep(300)
