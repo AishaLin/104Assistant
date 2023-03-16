@@ -113,8 +113,8 @@ class Assistant:
       is_workday = self.check_is_workday(today_tw)
 
       if is_workday:
-        should_check_in = not is_working and now_tw.hour == 8
-        should_check_out = is_working and now_tw.hour == 18
+        should_check_in = not is_working and now_tw.hour == 10
+        should_check_out = is_working and now_tw.hour == 19
         if should_check_in or should_check_out:
           self.check_in_check_out(now_tw, should_check_in)
           is_working = not is_working
