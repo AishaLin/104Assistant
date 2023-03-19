@@ -12,6 +12,8 @@ class Assistant:
     self.slack_bot = Slack_Bot()
     self.client104 = Client104()
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
+    now_tw_hour = self.get_now_tw().hour
+    self.is_working = now_tw_hour >= 8 and now_tw_hour <=18
     self.national_holidays = set([
       date(2023, 2, 27),
       date(2023, 2, 28),
@@ -30,7 +32,9 @@ class Assistant:
   def bot_send_message(self, msg):
     print(msg)
     if os.getenv('TELEGRAM_BOT_TOKEN') and os.getenv('TELEGRAM_CHAT_ID'):
-      self.telegram_bot.send_msg(msg)
+      acc = os.getenv('ACC')
+      user_name = acc.split('@')[0]
+      self.telegram_bot.send_msg(f'[{user_name.upper()}] {msg}')
     if os.getenv('SLACK_WEBHOOK_URL'):
       self.slack_bot.send_msg(msg)
     
@@ -68,10 +72,16 @@ class Assistant:
     return OoO_list
   
   def check_is_OoO(self, today):
-    inProgressForms = self.client104.get_in_progress_OoO_form_list()
-    inProgressOoODateList = self.get_OoO_date_list_from_forms(inProgressForms)
-    finishedForms = self.client104.get_finished_OoO_form_list()
-    finishedOoODateList = self.get_OoO_date_list_from_forms(finishedForms)
+    try:
+      inProgressForms = self.client104.get_in_progress_OoO_form_list()
+      inProgressOoODateList = self.get_OoO_date_list_from_forms(inProgressForms)
+    except Exception as error:
+      self.bot_send_message(f'GET IN PROGRESS OoO FORM LIST FAIL!! {error}')
+    try:
+      finishedForms = self.client104.get_finished_OoO_form_list()
+      finishedOoODateList = self.get_OoO_date_list_from_forms(finishedForms)
+    except Exception as error:
+      self.bot_send_message(f'GET FINISHED OoO FORM LIST FAIL!! {error}')
     overallOoODateList = inProgressOoODateList.union(finishedOoODateList)
     return today in overallOoODateList
 
@@ -99,26 +109,29 @@ class Assistant:
         self.bot_send_message(f'check out at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
     except Exception as error:
       self.bot_send_message(f'CHECK IN FAIL!! {error}')
+
+  def check_in_out_if_necessary(self):
+    now_tw = self.get_now_tw()
+    self.login(now_tw)
+    
+    today_tw = now_tw.date()
+    is_workday = self.check_is_workday(today_tw)
+
+    if is_workday:
+      should_check_in = not self.is_working and now_tw.hour == 10
+      should_check_out = self.is_working and now_tw.hour == 19
+      if should_check_in or should_check_out:
+        self.check_in_check_out(now_tw, should_check_in)
+        self.is_working = not self.is_working
     
   def main(self):
-    now_tw_hour = self.get_now_tw().hour
-    is_working = now_tw_hour >= 8 and now_tw_hour <=18
     self.bot_send_message(f'Hi, your 104 assistant has started work at {self.get_now_tw().strftime("%Y/%m/%d %a %H:%M:%S")}')
-
     while True:
-      now_tw = self.get_now_tw()
-      self.login(now_tw)
-  
-      today_tw = now_tw.date()
-      is_workday = self.check_is_workday(today_tw)
-
-      if is_workday:
-        should_check_in = not is_working and now_tw.hour == 10
-        should_check_out = is_working and now_tw.hour == 19
-        if should_check_in or should_check_out:
-          self.check_in_check_out(now_tw, should_check_in)
-          is_working = not is_working
-      
+      try:
+        self.check_in_out_if_necessary()
+      except:
+        self.bot_send_message('retry now.')
+        continue
       time.sleep(300)
 
 if __name__ == '__main__':
