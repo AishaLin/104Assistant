@@ -26,8 +26,8 @@ class Client104:
     }
     cardBody = {
       "deviceId": "ADD0E814-AC59-40D4-9073-2AE16FC150E0",
-      "latitude": 25.03069017817366,
-      "longitude": 121.5574925523737
+      "latitude": 25.039281,
+      "longitude": 121.5480778
     }
     requests.post(cardUrl, headers=cardHeaders, json=cardBody)
 
