@@ -61,28 +61,31 @@ class Assistant:
   def is_OoO_request_type(self, form):
     return form['formCode'] == FORM_CODE__OOO_REQUEST
   
-  def is_OoO_Withdraw_type(self, form):
+  def is_ooo_withdraw_type(self, form):
     return form['formCode'] == FORM_CODE__OOO_WITHDRAW
   
-  def is_OoO_request_type_and_completed(self, form):
-    return form['formCode'] == FORM_CODE__OOO_REQUEST and form['requestStatus'] == REQUEST_STATUS__COMPLETED
-  
+  def is_sign_off_completed(self, form):
+    return form['requestStatus'] == REQUEST_STATUS__COMPLETED
+
   def check_is_OoO(self, today):
     try:
       inProgressForms = self.client104.get_in_progress_OoO_form_list()
       inProgressOoORequestForms = filter(self.is_OoO_request_type, inProgressForms)
-      inProgressOoOWithdrawForms = filter(self.is_OoO_Withdraw_type, inProgressForms)
+      inProgressOoOWithdrawForms = filter(self.is_ooo_withdraw_type, inProgressForms)
       inProgressOoORequestDateList = self.get_OoO_date_list_from_forms(inProgressOoORequestForms)
       inProgressOoOWithdrawDateList = self.get_OoO_date_list_from_forms(inProgressOoOWithdrawForms)
     except Exception as error:
       self.bot_send_message(f'GET IN PROGRESS OoO FORM LIST FAIL!! {error}')
     try:
-      finishedForms = self.client104.get_finished_OoO_form_list()
-      finishedOoORequestForms = filter(self.is_OoO_request_type_and_completed, finishedForms)
+      finishedForms = filter(self.is_sign_off_completed, self.client104.get_finished_OoO_form_list())
+      finishedOoORequestForms = filter(self.is_OoO_request_type, finishedForms)
+      finishedOoOWithdrawForms = filter(self.is_ooo_withdraw_type, finishedForms)
       finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
+      finishedOoOWithdrawDateList = self.get_OoO_date_list_from_forms(finishedOoOWithdrawForms)
     except Exception as error:
       self.bot_send_message(f'GET FINISHED OoO FORM LIST FAIL!! {error}')
-    overallOoODateList = inProgressOoORequestDateList.union(finishedOoORequestDateList) - inProgressOoOWithdrawDateList
+    overallOoODateList = inProgressOoORequestDateList.union(finishedOoORequestDateList) - inProgressOoOWithdrawDateList - finishedOoOWithdrawDateList
+
     print('overallOoODateList: ', overallOoODateList)
     return today in overallOoODateList
 
