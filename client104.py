@@ -31,7 +31,7 @@ class Client104:
     }
     requests.post(cardUrl, headers=cardHeaders, json=cardBody)
 
-  def is_OoO_request_form(self, form):
+  def is_OoO_request_in_progress_form(self, form):
     return form['formCode'] == 101
 
   def get_in_progress_OoO_form_list(self):
@@ -44,7 +44,10 @@ class Client104:
       "offset": 0,
     }
     response = requests.post(getInProgressFormUrl, headers=getFormHeaders, json=getFormBody)
-    return filter(self.is_OoO_request_form, response.json()['data'])
+    return filter(self.is_OoO_request_in_progress_form, response.json()['data'])
+  
+  def is_OoO_request_finished_form(self, form):
+    return form['formCode'] == 101 and form['requestStatus'] == 2
   
   def get_finished_OoO_form_list(self):
     getFinishedFormUrl = f'{self.domain}/prohrm/api/app/trackForm/finished/self'
@@ -56,4 +59,4 @@ class Client104:
       "offset": 0,
     }
     response = requests.post(getFinishedFormUrl, headers=getFormHeaders, json=getFormBody)
-    return filter(self.is_OoO_request_form, response.json()['data'])
+    return filter(self.is_OoO_request_finished_form, response.json()['data'])
