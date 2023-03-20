@@ -1,13 +1,13 @@
 import requests
 import os
+from constants import DOMAIN
 
 class Client104:
   def __init__(self):
-    self.domain = 'https://pro.104.com.tw'
     self.jwt = ''
 
   def login(self):
-    loginUrl = f'{self.domain}/prohrm/api/login/token'
+    loginUrl = f'{DOMAIN}/prohrm/api/login/token'
     acc = os.getenv('ACC')
     pwd = os.getenv('PPP')
     loginBody = {
@@ -20,7 +20,7 @@ class Client104:
     self.jwt = response.json()['data']['access']
 
   def check_in(self):
-    cardUrl = f'{self.domain}/prohrm/api/app/card/gps'
+    cardUrl = f'{DOMAIN}/prohrm/api/app/card/gps'
     cardHeaders = {
       "Authorization" : f"Bearer {self.jwt}",
     }
@@ -31,11 +31,8 @@ class Client104:
     }
     requests.post(cardUrl, headers=cardHeaders, json=cardBody)
 
-  def is_OoO_request_in_progress_form(self, form):
-    return form['formCode'] == 101
-
   def get_in_progress_OoO_form_list(self):
-    getInProgressFormUrl = f'{self.domain}/prohrm/api/app/trackForm/inProgress/self'
+    getInProgressFormUrl = f'{DOMAIN}/prohrm/api/app/trackForm/inProgress/self'
     getFormHeaders = {
       "Authorization" : f"Bearer {self.jwt}",
     }
@@ -44,13 +41,10 @@ class Client104:
       "offset": 0,
     }
     response = requests.post(getInProgressFormUrl, headers=getFormHeaders, json=getFormBody)
-    return filter(self.is_OoO_request_in_progress_form, response.json()['data'])
-  
-  def is_OoO_request_finished_form(self, form):
-    return form['formCode'] == 101 and form['requestStatus'] == 2
+    return response.json()['data']
   
   def get_finished_OoO_form_list(self):
-    getFinishedFormUrl = f'{self.domain}/prohrm/api/app/trackForm/finished/self'
+    getFinishedFormUrl = f'{DOMAIN}/prohrm/api/app/trackForm/finished/self'
     getFormHeaders = {
       "Authorization" : f"Bearer {self.jwt}",
     }
@@ -59,4 +53,4 @@ class Client104:
       "offset": 0,
     }
     response = requests.post(getFinishedFormUrl, headers=getFormHeaders, json=getFormBody)
-    return filter(self.is_OoO_request_finished_form, response.json()['data'])
+    return response.json()['data']

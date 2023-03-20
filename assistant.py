@@ -5,6 +5,7 @@ from slack_bot import Slack_Bot
 from client104 import Client104
 import time
 import os
+from constants import NATIONAL_HOLIDAYS, FORM_CODE__OOO_REQUEST, FORM_CODE__OOO_WITHDRAW, REQUEST_STATUS__COMPLETED, REQUEST_STATUS__WITHDRAW
 
 class Assistant:
   def __init__(self):
@@ -14,20 +15,6 @@ class Assistant:
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
     now_tw_hour = self.get_now_tw().hour
     self.is_working = now_tw_hour >= 8 and now_tw_hour <=18
-    self.national_holidays = set([
-      date(2023, 2, 27),
-      date(2023, 2, 28),
-      date(2023, 4, 3),
-      date(2023, 4, 4),
-      date(2023, 4, 5),
-      date(2023, 5, 1),
-      date(2023, 6, 22),
-      date(2023, 6, 23),
-      date(2023, 9, 29),
-      date(2023, 10, 9),
-      date(2023, 10, 10),
-      date(2024, 1, 1),
-    ])
 
   def bot_send_message(self, msg):
     print(msg)
@@ -71,23 +58,37 @@ class Assistant:
         OoO_list.add(OoO_date)
     return OoO_list
   
+  def is_OoO_request_type(self, form):
+    return form['formCode'] == FORM_CODE__OOO_REQUEST
+  
+  def is_OoO_Withdraw_type(self, form):
+    return form['formCode'] == FORM_CODE__OOO_WITHDRAW
+  
+  def is_OoO_request_type_and_completed(self, form):
+    return form['formCode'] == FORM_CODE__OOO_REQUEST and form['requestStatus'] == REQUEST_STATUS__COMPLETED
+  
   def check_is_OoO(self, today):
     try:
       inProgressForms = self.client104.get_in_progress_OoO_form_list()
-      inProgressOoODateList = self.get_OoO_date_list_from_forms(inProgressForms)
+      inProgressOoORequestForms = filter(self.is_OoO_request_type, inProgressForms)
+      inProgressOoOWithdrawForms = filter(self.is_OoO_Withdraw_type, inProgressForms)
+      inProgressOoORequestDateList = self.get_OoO_date_list_from_forms(inProgressOoORequestForms)
+      inProgressOoOWithdrawDateList = self.get_OoO_date_list_from_forms(inProgressOoOWithdrawForms)
     except Exception as error:
       self.bot_send_message(f'GET IN PROGRESS OoO FORM LIST FAIL!! {error}')
     try:
       finishedForms = self.client104.get_finished_OoO_form_list()
-      finishedOoODateList = self.get_OoO_date_list_from_forms(finishedForms)
+      finishedOoORequestForms = filter(self.is_OoO_request_type_and_completed, finishedForms)
+      finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
     except Exception as error:
       self.bot_send_message(f'GET FINISHED OoO FORM LIST FAIL!! {error}')
-    overallOoODateList = inProgressOoODateList.union(finishedOoODateList)
+    overallOoODateList = inProgressOoORequestDateList.union(finishedOoORequestDateList) - inProgressOoOWithdrawDateList
+    print('overallOoODateList: ', overallOoODateList)
     return today in overallOoODateList
 
   def check_is_workday(self, date):
     is_OoO = self.check_is_OoO(date)
-    return date.weekday() < 5 and date not in self.national_holidays and not is_OoO
+    return date.weekday() < 5 and date not in NATIONAL_HOLIDAYS and not is_OoO
 
   def get_now_tw(self):
     now_utc = datetime.now(pytz.utc)
