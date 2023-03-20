@@ -100,7 +100,7 @@ class Assistant:
     except Exception as error:
       self.bot_send_message(f'LOGIN FAIL!! {error}')
 
-  def check_in_check_out(self, time, is_check_in_type):
+  def handle_check_in_out(self, time, is_check_in_type):
     try:
       self.client104.check_in()
       if is_check_in_type:
@@ -121,7 +121,7 @@ class Assistant:
       should_check_in = not self.is_working and now_tw.hour == 10
       should_check_out = self.is_working and now_tw.hour == 19 and now_tw.minute > 10
       if should_check_in or should_check_out:
-        self.check_in_check_out(now_tw, should_check_in)
+        self.handle_check_in_out(now_tw, should_check_in)
         self.is_working = not self.is_working
     
   def main(self):
