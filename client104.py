@@ -31,7 +31,7 @@ class Client104:
     }
     requests.post(cardUrl, headers=cardHeaders, json=cardBody)
 
-  def get_in_progress_OoO_form_list(self):
+  def get_in_progress_form_list(self):
     getInProgressFormUrl = f'{DOMAIN}/prohrm/api/app/trackForm/inProgress/self'
     getFormHeaders = {
       "Authorization" : f"Bearer {self.jwt}",
@@ -43,7 +43,7 @@ class Client104:
     response = requests.post(getInProgressFormUrl, headers=getFormHeaders, json=getFormBody)
     return response.json()['data']
   
-  def get_finished_OoO_form_list(self):
+  def get_finished_form_list(self):
     getFinishedFormUrl = f'{DOMAIN}/prohrm/api/app/trackForm/finished/self'
     getFormHeaders = {
       "Authorization" : f"Bearer {self.jwt}",

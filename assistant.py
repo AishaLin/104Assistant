@@ -69,7 +69,7 @@ class Assistant:
 
   def check_is_OoO(self, today):
     try:
-      inProgressForms = self.client104.get_in_progress_OoO_form_list()
+      inProgressForms = self.client104.get_in_progress_form_list()
       inProgressOoORequestForms = filter(self.is_OoO_request_type, inProgressForms)
       inProgressOoOWithdrawForms = filter(self.is_OoO_withdraw_type, inProgressForms)
       inProgressOoORequestDateList = self.get_OoO_date_list_from_forms(inProgressOoORequestForms)
@@ -77,7 +77,7 @@ class Assistant:
     except Exception as error:
       self.bot_send_message(f'GET IN PROGRESS OoO FORM LIST FAIL!! {error}')
     try:
-      finishedForms = list(filter(self.is_sign_off_completed, self.client104.get_finished_OoO_form_list()))
+      finishedForms = list(filter(self.is_sign_off_completed, self.client104.get_finished_form_list()))
       finishedOoORequestForms = filter(self.is_OoO_request_type, finishedForms)
       finishedOoOWithdrawForms = filter(self.is_OoO_withdraw_type, finishedForms)
       finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
