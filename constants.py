@@ -2,6 +2,9 @@ from datetime import date
 
 DOMAIN = 'https://pro.104.com.tw'
 
+WORK_HOUR_START = 10
+WORK_HOUR_END = 19
+
 FORM_CODE__OOO_REQUEST = 101
 FORM_CODE__OOO_WITHDRAW = 107
 

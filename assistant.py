@@ -5,7 +5,7 @@ from slack_bot import Slack_Bot
 from client104 import Client104
 import time
 import os
-from constants import NATIONAL_HOLIDAYS, FORM_CODE__OOO_REQUEST, FORM_CODE__OOO_WITHDRAW, REQUEST_STATUS__COMPLETED, REQUEST_STATUS__WITHDRAW
+from constants import NATIONAL_HOLIDAYS, FORM_CODE__OOO_REQUEST, FORM_CODE__OOO_WITHDRAW, REQUEST_STATUS__COMPLETED, WORK_HOUR_START, WORK_HOUR_END
 
 class Assistant:
   def __init__(self):
@@ -14,7 +14,8 @@ class Assistant:
     self.client104 = Client104()
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
     now_tw_hour = self.get_now_tw().hour
-    self.is_working = now_tw_hour >= 8 and now_tw_hour <=18
+    self.is_working = now_tw_hour >= WORK_HOUR_START and now_tw_hour <= WORK_HOUR_END
+    self.check_in_time = ''
 
   def bot_send_message(self, msg):
     print(msg)
@@ -107,10 +108,25 @@ class Assistant:
       self.client104.check_in()
       if is_check_in_type:
         self.bot_send_message(f'check in at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
+        self.check_in_time = time.strftime("%Y/%m/%d %a %H:%M:%S")
       else:
         self.bot_send_message(f'check out at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
+        self.check_in_time = ''
     except Exception as error:
       self.bot_send_message(f'CHECK IN FAIL!! {error}')
+
+  def check_is_work_enough(self, now_tw):
+    if self.check_in_time == '':
+      return True
+    try:
+      check_in = datetime.strptime(self.check_in_time, '%Y-%m-%d %H:%M:%S')
+      current = datetime.strptime(now_tw.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
+      time_diff = current - check_in
+      total_seconds = abs(time_diff.total_seconds())
+      hours_diff = total_seconds / 3600
+    except Exception as error:
+      self.bot_send_message(f'CHECK IS WORK ENOUGH FAIL!! {error}')
+    return hours_diff >= 9
 
   def check_in_out_if_necessary(self):
     now_tw = self.get_now_tw()
@@ -118,10 +134,11 @@ class Assistant:
     
     today_tw = now_tw.date()
     is_workday = self.check_is_workday(today_tw)
+    is_work_enough = self.check_is_work_enough(now_tw)
 
     if is_workday:
-      should_check_in = not self.is_working and now_tw.hour == 10
-      should_check_out = self.is_working and now_tw.hour == 19 and now_tw.minute > 10
+      should_check_in = not self.is_working and now_tw.hour == WORK_HOUR_START
+      should_check_out = self.is_working and now_tw.hour == WORK_HOUR_END and is_work_enough
       if should_check_in or should_check_out:
         self.handle_check_in_out(now_tw, should_check_in)
         self.is_working = not self.is_working
