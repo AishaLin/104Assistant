@@ -108,7 +108,7 @@ class Assistant:
       self.client104.check_in()
       if is_check_in_type:
         self.bot_send_message(f'check in at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
-        self.check_in_time = time.strftime("%Y/%m/%d %a %H:%M:%S")
+        self.check_in_time = time.strftime("%Y/%m/%d %H:%M:%S")
       else:
         self.bot_send_message(f'check out at {time.strftime("%Y/%m/%d %a %H:%M:%S")}')
         self.check_in_time = ''
@@ -119,8 +119,8 @@ class Assistant:
     if self.check_in_time == '':
       return True
     try:
-      check_in = datetime.strptime(self.check_in_time, '%Y-%m-%d %H:%M:%S')
-      current = datetime.strptime(now_tw.strftime('%Y-%m-%d %H:%M:%S'), '%Y-%m-%d %H:%M:%S')
+      check_in = datetime.strptime(self.check_in_time, '%Y/%m/%d %H:%M:%S')
+      current = datetime.strptime(now_tw.strftime('%Y/%m/%d %H:%M:%S'), '%Y/%m/%d %H:%M:%S')
       time_diff = current - check_in
       total_seconds = abs(time_diff.total_seconds())
       hours_diff = total_seconds / 3600
