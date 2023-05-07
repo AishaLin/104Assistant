@@ -100,7 +100,7 @@ class Assistant:
       try:
         self.check_in_out_if_necessary()
       except:
-        self.bot_send_message('What the (☉д⊙)')
+        self.bot_send_message('What the (☉д⊙)"')
       time.sleep(300)
 
 if __name__ == '__main__':
