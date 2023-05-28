@@ -1,72 +1,127 @@
 import requests
 import os
-from datetime import date, timedelta
+import xml.etree.ElementTree as ET
+from datetime import date, timedelta, datetime
 
 from abstractProxy import AbstractProxy
 
-DOMAIN = 'https://pro.104.com.tw'
+DOMAIN = 'https://scsservices2.azurewebsites.net'
 
-FORM_CODE__OOO_REQUEST = 101
-FORM_CODE__OOO_WITHDRAW = 107
+CHECK_IN_DUTY_CODE = '4'
+CHECK_IN_DUTY_STATUS = '4'
+CHECK_OUT_DUTY_CODE = '8'
+CHECK_OUT_DUTY_STATUS = '5'
 
-REQUEST_STATUS__IN_PROGRESS = 1
-REQUEST_STATUS__COMPLETED = 2
-REQUEST_STATUS__WITHDRAW = 4
+OOO_REQUEST_COMPLETE_CHECK_TYPE = '9'
+OOO_WITHDRAW_CHECK_TYPE = '0'
 
 class ProxySoarCloud(AbstractProxy):
   def __init__(self):
     self.jwt = ''
 
   def login(self):
-    url = f'{DOMAIN}/prohrm/api/login/token'
+    url = f'{DOMAIN}//SCSService.asmx'
     acc = os.getenv('ACC')
     pwd = os.getenv('PPP')
-    body = {
-      "uno": "52621439",
-      "acc": acc,
-      "pwd": pwd,
-      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb3VyY2UiOiJhcHAtcHJvZCIsImNpZCI6MCwiaWF0IjoxNTUzNzUzMTQwfQ.ieJiJtNsseSO5fxNH1XTa6bqHZ0zUyoPVUYPNtOj4TM"
+    headers = {
+      "Content-Type": "application/soap+xml",
     }
-    response = requests.post(url, json=body)
-    self.jwt = response.json()['data']['access']
+    payload_xml = """
+      <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+        <soap12:Body>
+          <SystemObjectRun xmlns="http://scsservices.net/">
+            <args>
+              <SessionGuid>00000000-0000-0000-0000-000000000000</SessionGuid>
+              <Action>Login</Action>
+              <Format>Xml</Format>
+              <Bytes/>
+              <Value>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+                &lt;TLoginInputArgs xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+                &lt;AppName&gt;App&lt;/AppName&gt;
+                &lt;CompanyID&gt;SCS285&lt;/CompanyID&gt;
+                &lt;UserID&gt;__ACC__&lt;/UserID&gt;
+                &lt;Password&gt;__PPP__&lt;/Password&gt;
+                &lt;LanguageID&gt;zh-TW&lt;/LanguageID&gt;
+                &lt;UserHostAddress /&gt;
+                &lt;IsSaveSessionBuffer&gt;true&lt;/IsSaveSessionBuffer&gt;
+                &lt;ValidateCode /&gt;
+                &lt;OAuthType&gt;NotSet&lt;/OAuthType&gt;
+                &lt;IsValidateRegister&gt;false&lt;/IsValidateRegister&gt;
+                &lt;/TLoginInputArgs&gt;
+              </Value>
+            </args>
+          </SystemObjectRun>
+        </soap12:Body>
+      </soap12:Envelope>
+    """
+    payload_xml = payload_xml.replace("__ACC__", str(acc)).replace("__PPP__", str(pwd))
+    requests.post(url, data=payload_xml, headers=headers)
 
   def check_in_out(self, is_check_in_type):
     url = f'{DOMAIN}/prohrm/api/app/card/gps'
     headers = {
-      "Authorization" : f"Bearer {self.jwt}",
+      "Content-Type": "application/soap+xml",
     }
-    body = {
-      "deviceId": "ADD0E814-AC59-40D4-9073-2AE16FC150E0",
-      "latitude": 25.039281,
-      "longitude": 121.5480778
-    }
-    requests.post(url, headers=headers, json=body)
+    payload_xml = """
+      <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+        <soap12:Body>
+          <BusinessObjectRun xmlns="http://scsservices.net/">
+            <args>
+              <SessionGuid>0009947c-965f-4051-8917-68f76b7e7b4b</SessionGuid>
+              <ProgID>WATT0022000</ProgID>
+              <Action>ExecFunc</Action>
+              <Format>Xml</Format>
+              <Bytes/>
+              <Value>&lt;?xml version="1.0" encoding="utf-16"?&gt;
+                &lt;TExecFuncInputArgs xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"&gt;
+                  &lt;FuncID&gt;ExecuteSwipeData_Web&lt;/FuncID&gt;
+                  &lt;Parameters&gt;
+                    &lt;Parameter&gt;
+                      &lt;Name&gt;DutyCode&lt;/Name&gt;
+                      &lt;Value xsi:type="xsd:int"&gt;___DUTY_CODE___&lt;/Value&gt;
+                    &lt;/Parameter&gt;
+                    &lt;Parameter&gt;
+                      &lt;Name&gt;DutyStatus&lt;/Name&gt;
+                      &lt;Value xsi:type="xsd:int"&gt;___DUTY_STATUS___&lt;/Value&gt;
+                    &lt;/Parameter&gt;
+                    &lt;Parameter&gt;
+                      &lt;Name&gt;GPSLocation&lt;/Name&gt;
+                      &lt;Value xsi:type="xsd:string"&gt;25.0307104191219,121.558177293395&lt;/Value&gt;
+                    &lt;/Parameter&gt;
+                    &lt;Parameter&gt;
+                      &lt;Name&gt;CompanyID&lt;/Name&gt;
+                      &lt;Value xsi:type="xsd:string"&gt;SCS285&lt;/Value&gt;
+                    &lt;/Parameter&gt;
+                    &lt;Parameter&gt;
+                      &lt;Name&gt;GpsAddress&lt;/Name&gt;
+                      &lt;Value xsi:type="xsd:string"&gt;11052,  信義區, 基隆路二段 41–77&lt;/Value&gt;
+                    &lt;/Parameter&gt;
+                    &lt;Parameter&gt;
+                      &lt;Name&gt;NoCheckOnDutyStatus&lt;/Name&gt;
+                      &lt;Value xsi:type="xsd:boolean"&gt;true&lt;/Value&gt;
+                    &lt;/Parameter&gt;
+                  &lt;/Parameters&gt;
+                &lt;/TExecFuncInputArgs&gt;
+              </Value>
+            </args>
+          </BusinessObjectRun>
+        </soap12:Body>
+      </soap12:Envelope>
+    """
+    dutyCode = CHECK_IN_DUTY_CODE if is_check_in_type else CHECK_OUT_DUTY_CODE
+    dutyStatus = CHECK_IN_DUTY_STATUS if is_check_in_type else CHECK_OUT_DUTY_STATUS
+    payload_xml = payload_xml.replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus)
+    requests.post(url, data=payload_xml, headers=headers)
 
   # OoO request/withdraw handlers
-
-  def is_OoO_request_type(self, form):
-    return form['formCode'] == FORM_CODE__OOO_REQUEST
-  
-  def is_OoO_withdraw_type(self, form):
-    return form['formCode'] == FORM_CODE__OOO_WITHDRAW
   
   def is_sign_off_completed(self, form):
-    return form['requestStatus'] == REQUEST_STATUS__COMPLETED
+    # judged all types as completed, except OOO_WITHDRAW_CHECK_TYPE 0
+    return not form.findtext("TMP_CHECKTYPE") == OOO_WITHDRAW_CHECK_TYPE
   
-  def convert_date_str_to_datetime(self, date_str):
-    date_parts = date_str.split('/')
-    if len(date_parts) < 3:
-      return None
-    year = int(date_parts[0])
-    month = int(date_parts[1])
-    day = int(date_parts[2])
-    return date(year, month, day)
-  
-  def parse_summary_text_to_date_list(self, summary_text):
-    start_date_str = summary_text.split(' ')[0]
-    start_date = self.convert_date_str_to_datetime(start_date_str)
-    end_date_str = summary_text.split('~ ')[1].split(' ')[0] if len(summary_text.split('~ ')) > 1 and len(summary_text.split('~ ')[1].split(' ')) > 0 else start_date_str
-    end_date = self.convert_date_str_to_datetime(end_date_str) or start_date
+  def parse_summary_text_to_date_list(self, start_date_str, end_date_str):
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%dT%H:%M:%S").date()
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%dT%H:%M:%S").date()
 
     date_list = []
     delta = timedelta(days=1)
@@ -77,54 +132,57 @@ class ProxySoarCloud(AbstractProxy):
     return date_list
   
   def get_OoO_date_list_from_forms(self, forms):
-    OoO_list = set()
-    for item in forms:
-      summary_text = item['summary']
-      OoO_list_per_form = self.parse_summary_text_to_date_list(summary_text)
+    OoO_list = set()      
+    for watt_element in forms:
+      start_date_str = watt_element.findtext("STARTDATE")
+      end_date_str = watt_element.findtext("ENDDATE")
+      OoO_list_per_form = self.parse_summary_text_to_date_list(start_date_str, end_date_str)
       for OoO_date in OoO_list_per_form:
         OoO_list.add(OoO_date)
     return OoO_list
   
-  # in progress handlers
-
-  def get_in_progress_form_list(self):
-    url = f'{DOMAIN}/prohrm/api/app/trackForm/inProgress/self'
-    headers = {
-      "Authorization" : f"Bearer {self.jwt}",
-    }
-    body = {
-      "limit": 10,
-      "offset": 0,
-    }
-    response = requests.post(url, headers=headers, json=body)
-    return response.json()['data']
+  # in progress handlers(judged all types as completed, except CheckType == 0)
 
   def check_today_OoO_in_progress_status(self, today):
-    inProgressForms = self.get_in_progress_form_list()
-    inProgressOoORequestForms = filter(self.is_OoO_request_type, inProgressForms)
-    inProgressOoOWithdrawForms = filter(self.is_OoO_withdraw_type, inProgressForms)
-    inProgressOoORequestDateList = self.get_OoO_date_list_from_forms(inProgressOoORequestForms)
-    inProgressOoOWithdrawDateList = self.get_OoO_date_list_from_forms(inProgressOoOWithdrawForms)
-    return today in inProgressOoORequestDateList, today in inProgressOoOWithdrawDateList
+    return False, False
   
   # finished handlers
   
   def get_finished_form_list(self):
-    url = f'{DOMAIN}/prohrm/api/app/trackForm/finished/self'
+    url = f'{DOMAIN}//SCSService.asmx'
     headers = {
-      "Authorization" : f"Bearer {self.jwt}",
+      "Content-Type": "application/soap+xml",
+      "Connection": "keep-alive"
     }
-    body = {
-      "limit": 10,
-      "offset": 0,
-    }
-    response = requests.post(url, headers=headers, json=body)
-    return response.json()['data']
+    payload_xml = """
+      <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
+        <soap12:Body>
+          <BOFind xmlns="http://scsservices.net/">
+            <inputArgs>
+              <SessionGuid>1543c22f-bc8b-478c-afc8-3a3d0a1bb64c</SessionGuid>
+              <ProgID>WATT0022500</ProgID>
+              <Keyword/>
+              <SelectFields>*</SelectFields>
+              <DateValue>0001-01-01T00:00:00</DateValue>
+              <UserFilter>A.DataType = 1</UserFilter>
+              <SelectCount>20</SelectCount>
+              <SelectSection>0</SelectSection>
+              <SourceProgID>WATT0022500</SourceProgID>
+              <SourceFieldName/>
+            </inputArgs>
+          </BOFind>
+        </soap12:Body>
+      </soap12:Envelope>
+    """
+    response = requests.post(url, data=payload_xml, headers=headers)
+    root = ET.fromstring(response.content)
+    document_element = root.find(".//{urn:schemas-microsoft-com:xml-diffgram-v1}DocumentElement")
+    if document_element:
+      return document_element.findall(".//WATT0022500")
+    else:
+      return []
   
   def check_today_OoO_finished_status(self, today):
-    finishedForms = list(filter(self.is_sign_off_completed, self.get_finished_form_list()))
-    finishedOoORequestForms = filter(self.is_OoO_request_type, finishedForms)
-    finishedOoOWithdrawForms = filter(self.is_OoO_withdraw_type, finishedForms)
+    finishedOoORequestForms = list(filter(self.is_sign_off_completed, self.get_finished_form_list()))
     finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
-    finishedOoOWithdrawDateList = self.get_OoO_date_list_from_forms(finishedOoOWithdrawForms)
-    return today in finishedOoORequestDateList, today in finishedOoOWithdrawDateList
+    return today in finishedOoORequestDateList, False

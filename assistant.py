@@ -11,7 +11,7 @@ from constants import NATIONAL_HOLIDAYS, WORK_HOUR_START, WORK_HOUR_END, APP__10
 class Assistant:
   def __init__(self):
     self.app = os.getenv('APP')
-    self.proxy = ProxySoarCloud() if self.app == APP__104 else Proxy104()
+    self.proxy = Proxy104() if self.app == APP__104 else ProxySoarCloud()
     self.telegram_bot = Telegram_Bot()
     self.slack_bot = Slack_Bot()
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
