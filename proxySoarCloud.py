@@ -1,7 +1,7 @@
 import requests
 import os
 import xml.etree.ElementTree as ET
-from datetime import date, timedelta, datetime
+from datetime import timedelta, datetime
 
 from abstractProxy import AbstractProxy
 
@@ -86,7 +86,7 @@ class ProxySoarCloud(AbstractProxy):
                     &lt;/Parameter&gt;
                     &lt;Parameter&gt;
                       &lt;Name&gt;GPSLocation&lt;/Name&gt;
-                      &lt;Value xsi:type="xsd:string"&gt;25.0307104191219,121.558177293395&lt;/Value&gt;
+                      &lt;Value xsi:type="xsd:string"&gt;___GPS_LOCATION___&lt;/Value&gt;
                     &lt;/Parameter&gt;
                     &lt;Parameter&gt;
                       &lt;Name&gt;CompanyID&lt;/Name&gt;
@@ -94,7 +94,7 @@ class ProxySoarCloud(AbstractProxy):
                     &lt;/Parameter&gt;
                     &lt;Parameter&gt;
                       &lt;Name&gt;GpsAddress&lt;/Name&gt;
-                      &lt;Value xsi:type="xsd:string"&gt;11052,  信義區, 基隆路二段 41–77&lt;/Value&gt;
+                      &lt;Value xsi:type="xsd:string"&gt;___GPS_ADDRESS___&lt;/Value&gt;
                     &lt;/Parameter&gt;
                     &lt;Parameter&gt;
                       &lt;Name&gt;NoCheckOnDutyStatus&lt;/Name&gt;
@@ -110,14 +110,20 @@ class ProxySoarCloud(AbstractProxy):
     """
     dutyCode = CHECK_IN_DUTY_CODE if is_check_in_type else CHECK_OUT_DUTY_CODE
     dutyStatus = CHECK_IN_DUTY_STATUS if is_check_in_type else CHECK_OUT_DUTY_STATUS
-    payload_xml = payload_xml.replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus)
+    gpsLocation = '25.0307104191219,121.558177293395'
+    gpsAddress = '11052,信義區,基隆路二段 41–77'
+    payload_xml = payload_xml.replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation.encode('utf-8')).replace("___GPS_ADDRESS___", gpsAddress.encode('utf-8'))
     requests.post(url, data=payload_xml, headers=headers)
 
   # OoO request/withdraw handlers
   
   def is_sign_off_completed(self, form):
     # judged all types as completed, except OOO_WITHDRAW_CHECK_TYPE 0
-    return not form.findtext("TMP_CHECKTYPE") == OOO_WITHDRAW_CHECK_TYPE
+    check_type_element = form.find(".//TMP_CHECKTYPE")
+    if check_type_element is not None:
+      return not check_type_element.text == OOO_WITHDRAW_CHECK_TYPE
+    else:
+      return False
   
   def parse_summary_text_to_date_list(self, start_date_str, end_date_str):
     start_date = datetime.strptime(start_date_str, "%Y-%m-%dT%H:%M:%S").date()
@@ -175,12 +181,9 @@ class ProxySoarCloud(AbstractProxy):
       </soap12:Envelope>
     """
     response = requests.post(url, data=payload_xml, headers=headers)
-    root = ET.fromstring(response.content)
-    document_element = root.find(".//{urn:schemas-microsoft-com:xml-diffgram-v1}DocumentElement")
-    if document_element:
-      return document_element.findall(".//WATT0022500")
-    else:
-      return []
+    tree = ET.fromstring(response.text)
+    watt_elements = tree.findall('.//WATT0022500')
+    return watt_elements if watt_elements else []
   
   def check_today_OoO_finished_status(self, today):
     finishedOoORequestForms = list(filter(self.is_sign_off_completed, self.get_finished_form_list()))
