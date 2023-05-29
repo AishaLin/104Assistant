@@ -2,6 +2,8 @@ import requests
 import os
 import xml.etree.ElementTree as ET
 from datetime import timedelta, datetime
+from telegram_bot import Telegram_Bot
+from slack_bot import Slack_Bot
 
 from abstractProxy import AbstractProxy
 
@@ -17,10 +19,10 @@ OOO_WITHDRAW_CHECK_TYPE = '0'
 
 class ProxySoarCloud(AbstractProxy):
   def __init__(self):
-    self.jwt = ''
+    self.sessionGuid = ''
 
   def login(self):
-    url = f'{DOMAIN}//SCSService.asmx'
+    url = f'{DOMAIN}/SCSService.asmx'
     acc = os.getenv('ACC')
     pwd = os.getenv('PPP')
     headers = {
@@ -55,10 +57,17 @@ class ProxySoarCloud(AbstractProxy):
       </soap12:Envelope>
     """
     payload_xml = payload_xml.replace("__ACC__", str(acc)).replace("__PPP__", str(pwd))
-    requests.post(url, data=payload_xml, headers=headers)
+    response = requests.post(url, data=payload_xml, headers=headers)
+    tree = ET.fromstring(response.text)
+    namespace = {'ns': 'http://scsservices.net/'}
+    value_element = tree.find('.//ns:Value', namespace)
+    value_xml = value_element.text
+    value_root = ET.fromstring(value_xml)
+    session_guid = value_root.find('.//SessionGuid').text
+    self.sessionGuid = session_guid if session_guid is not None else ''
 
   def check_in_out(self, is_check_in_type):
-    url = f'{DOMAIN}/prohrm/api/app/card/gps'
+    url = f'{DOMAIN}/SCSService.asmx'
     headers = {
       "Content-Type": "application/soap+xml",
     }
@@ -67,7 +76,7 @@ class ProxySoarCloud(AbstractProxy):
         <soap12:Body>
           <BusinessObjectRun xmlns="http://scsservices.net/">
             <args>
-              <SessionGuid>0009947c-965f-4051-8917-68f76b7e7b4b</SessionGuid>
+              <SessionGuid>___SESSION_GUID___</SessionGuid>
               <ProgID>WATT0022000</ProgID>
               <Action>ExecFunc</Action>
               <Format>Xml</Format>
@@ -112,8 +121,18 @@ class ProxySoarCloud(AbstractProxy):
     dutyStatus = CHECK_IN_DUTY_STATUS if is_check_in_type else CHECK_OUT_DUTY_STATUS
     gpsLocation = '25.0307104191219,121.558177293395'
     gpsAddress = '11052,信義區,基隆路二段 41–77'
-    payload_xml = payload_xml.replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation.encode('utf-8')).replace("___GPS_ADDRESS___", gpsAddress.encode('utf-8'))
-    requests.post(url, data=payload_xml, headers=headers)
+    payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", gpsAddress)
+    response = requests.post(url, data=payload_xml.encode('utf-8'), headers=headers)
+    if response.status_code != 200:
+      telegram_bot = Telegram_Bot()
+      slack_bot = Slack_Bot()
+      msg = 'Login failed' if is_check_in_type else 'Logout failed'
+      if os.getenv('TELEGRAM_BOT_TOKEN') and os.getenv('TELEGRAM_CHAT_ID'):
+        acc = os.getenv('ACC')
+        telegram_bot.send_msg(f'[{acc}] {msg}')
+      if os.getenv('SLACK_WEBHOOK_URL'):
+        slack_bot.send_msg(msg)
+
 
   # OoO request/withdraw handlers
   
@@ -121,7 +140,7 @@ class ProxySoarCloud(AbstractProxy):
     # judged all types as completed, except OOO_WITHDRAW_CHECK_TYPE 0
     check_type_element = form.find(".//TMP_CHECKTYPE")
     if check_type_element is not None:
-      return not check_type_element.text == OOO_WITHDRAW_CHECK_TYPE
+      return check_type_element.text != OOO_WITHDRAW_CHECK_TYPE
     else:
       return False
   
@@ -155,7 +174,7 @@ class ProxySoarCloud(AbstractProxy):
   # finished handlers
   
   def get_finished_form_list(self):
-    url = f'{DOMAIN}//SCSService.asmx'
+    url = f'{DOMAIN}/SCSService.asmx'
     headers = {
       "Content-Type": "application/soap+xml",
       "Connection": "keep-alive"
@@ -183,7 +202,7 @@ class ProxySoarCloud(AbstractProxy):
     response = requests.post(url, data=payload_xml, headers=headers)
     tree = ET.fromstring(response.text)
     watt_elements = tree.findall('.//WATT0022500')
-    return watt_elements if watt_elements else []
+    return watt_elements if watt_elements is not None else []
   
   def check_today_OoO_finished_status(self, today):
     finishedOoORequestForms = list(filter(self.is_sign_off_completed, self.get_finished_form_list()))
