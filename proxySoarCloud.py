@@ -9,13 +9,13 @@ from abstractProxy import AbstractProxy
 
 DOMAIN = 'https://scsservices2.azurewebsites.net'
 
-CHECK_IN_DUTY_CODE = '4'
-CHECK_IN_DUTY_STATUS = '4'
-CHECK_OUT_DUTY_CODE = '8'
-CHECK_OUT_DUTY_STATUS = '5'
+CHECK_IN__DUTY_CODE = '4'
+CHECK_IN__DUTY_STATUS = '4'
+CHECK_OUT__DUTY_CODE = '8'
+CHECK_OUT__DUTY_STATUS = '5'
 
-OOO_REQUEST_COMPLETE_CHECK_TYPE = '9'
-OOO_WITHDRAW_CHECK_TYPE = '0'
+OOO_REQUEST_COMPLETE__CHECK_TYPE = '9'
+OOO_WITHDRAW__CHECK_TYPE = '0'
 
 class ProxySoarCloud(AbstractProxy):
   def __init__(self):
@@ -117,8 +117,8 @@ class ProxySoarCloud(AbstractProxy):
         </soap12:Body>
       </soap12:Envelope>
     """
-    dutyCode = CHECK_IN_DUTY_CODE if is_check_in_type else CHECK_OUT_DUTY_CODE
-    dutyStatus = CHECK_IN_DUTY_STATUS if is_check_in_type else CHECK_OUT_DUTY_STATUS
+    dutyCode = CHECK_IN__DUTY_CODE if is_check_in_type else CHECK_OUT__DUTY_CODE
+    dutyStatus = CHECK_IN__DUTY_STATUS if is_check_in_type else CHECK_OUT__DUTY_STATUS
     gpsLocation = '25.0307104191219,121.558177293395'
     gpsAddress = '11052,信義區,基隆路二段 41–77'
     payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", gpsAddress)
@@ -137,10 +137,10 @@ class ProxySoarCloud(AbstractProxy):
   # OoO request/withdraw handlers
   
   def is_sign_off_completed(self, form):
-    # judged all types as completed, except OOO_WITHDRAW_CHECK_TYPE 0
+    # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
     check_type_element = form.find(".//TMP_CHECKTYPE")
     if check_type_element is not None:
-      return check_type_element.text != OOO_WITHDRAW_CHECK_TYPE
+      return check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
     else:
       return False
   
@@ -166,9 +166,10 @@ class ProxySoarCloud(AbstractProxy):
         OoO_list.add(OoO_date)
     return OoO_list
   
-  # in progress handlers(judged all types as completed, except CheckType == 0)
+  # in progress handlers
 
   def check_today_OoO_in_progress_status(self, today):
+    # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
     return False, False
   
   # finished handlers
