@@ -8,6 +8,7 @@
 
 * required items for login your account
 ```
+APP='104' or 'SoarCloud' (default = 'SoarCloud')
 ACC='account'
 PPP='password'
 ```
