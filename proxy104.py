@@ -42,7 +42,7 @@ class Proxy104(AbstractProxy):
     }
     requests.post(url, headers=headers, json=body)
 
-  # OoO request/withdraw handlers
+  # OoO FORM GENERAL HANDLERS
 
   def is_OoO_request_type(self, form):
     return form['formCode'] == FORM_CODE__OOO_REQUEST
@@ -85,7 +85,7 @@ class Proxy104(AbstractProxy):
         OoO_list.add(OoO_date)
     return OoO_list
   
-  # in progress handlers
+  # IN-PROGRESS FORM HANDLERS
 
   def get_in_progress_form_list(self):
     url = f'{DOMAIN}/prohrm/api/app/trackForm/inProgress/self'
@@ -107,7 +107,7 @@ class Proxy104(AbstractProxy):
     inProgressOoOWithdrawDateList = self.get_OoO_date_list_from_forms(inProgressOoOWithdrawForms)
     return today in inProgressOoORequestDateList, today in inProgressOoOWithdrawDateList
   
-  # finished handlers
+  # FINISHED FORM HANDLERS
   
   def get_finished_form_list(self):
     url = f'{DOMAIN}/prohrm/api/app/trackForm/finished/self'

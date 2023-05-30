@@ -20,6 +20,16 @@ OOO_WITHDRAW__CHECK_TYPE = '0'
 class ProxySoarCloud(AbstractProxy):
   def __init__(self):
     self.sessionGuid = ''
+    self.telegram_bot = Telegram_Bot()
+    self.slack_bot = Slack_Bot()
+
+  def bot_send_message(self, msg):
+    print(msg)
+    if os.getenv('TELEGRAM_BOT_TOKEN') and os.getenv('TELEGRAM_CHAT_ID'):
+      acc = os.getenv('ACC')
+      self.telegram_bot.send_msg(f'[{acc}] {msg}')
+    if os.getenv('SLACK_WEBHOOK_URL'):
+      self.slack_bot.send_msg(msg)
 
   def login(self):
     url = f'{DOMAIN}/SCSService.asmx'
@@ -124,17 +134,10 @@ class ProxySoarCloud(AbstractProxy):
     payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", gpsAddress)
     response = requests.post(url, data=payload_xml.encode('utf-8'), headers=headers)
     if response.status_code != 200:
-      telegram_bot = Telegram_Bot()
-      slack_bot = Slack_Bot()
-      msg = 'Login failed' if is_check_in_type else 'Logout failed'
-      if os.getenv('TELEGRAM_BOT_TOKEN') and os.getenv('TELEGRAM_CHAT_ID'):
-        acc = os.getenv('ACC')
-        telegram_bot.send_msg(f'[{acc}] {msg}')
-      if os.getenv('SLACK_WEBHOOK_URL'):
-        slack_bot.send_msg(msg)
+      msg = 'Check-in failed!' if is_check_in_type else 'Check-out failed!'
+      self.bot_send_message(msg)
 
-
-  # OoO request/withdraw handlers
+  # OoO FORM GENERAL HANDLERS
   
   def is_sign_off_completed(self, form):
     # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
@@ -166,13 +169,13 @@ class ProxySoarCloud(AbstractProxy):
         OoO_list.add(OoO_date)
     return OoO_list
   
-  # in progress handlers
+  # IN-PROGRESS FORM HANDLERS
 
   def check_today_OoO_in_progress_status(self, today):
     # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
     return False, False
   
-  # finished handlers
+  # FINISHED FORM HANDLERS
   
   def get_finished_form_list(self):
     url = f'{DOMAIN}/SCSService.asmx'
@@ -185,7 +188,7 @@ class ProxySoarCloud(AbstractProxy):
         <soap12:Body>
           <BOFind xmlns="http://scsservices.net/">
             <inputArgs>
-              <SessionGuid>1543c22f-bc8b-478c-afc8-3a3d0a1bb64c</SessionGuid>
+              <SessionGuid>___SESSION_GUID___</SessionGuid>
               <ProgID>WATT0022500</ProgID>
               <Keyword/>
               <SelectFields>*</SelectFields>
@@ -200,9 +203,12 @@ class ProxySoarCloud(AbstractProxy):
         </soap12:Body>
       </soap12:Envelope>
     """
+    payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid)
     response = requests.post(url, data=payload_xml, headers=headers)
     tree = ET.fromstring(response.text)
     watt_elements = tree.findall('.//WATT0022500')
+    if response.status_code != 200:
+      self.bot_send_message('get_finished_form_list fail!!')
     return watt_elements if watt_elements is not None else []
   
   def check_today_OoO_finished_status(self, today):
