@@ -1,6 +1,7 @@
 import requests
 import os
 from datetime import date, timedelta
+from constants import COMPANY_LAT, COMPANY_LNG
 
 from abstractProxy import AbstractProxy
 
@@ -37,8 +38,8 @@ class Proxy104(AbstractProxy):
     }
     body = {
       "deviceId": "ADD0E814-AC59-40D4-9073-2AE16FC150E0",
-      "latitude": 25.039281,
-      "longitude": 121.5480778
+      "latitude": COMPANY_LAT,
+      "longitude": COMPANY_LNG
     }
     requests.post(url, headers=headers, json=body)
 

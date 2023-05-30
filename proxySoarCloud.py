@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 from datetime import timedelta, datetime
 from telegram_bot import Telegram_Bot
 from slack_bot import Slack_Bot
+from constants import COMPANY_LAT, COMPANY_LNG, COMPANY_ADDRESS
 
 from abstractProxy import AbstractProxy
 
@@ -129,9 +130,8 @@ class ProxySoarCloud(AbstractProxy):
     """
     dutyCode = CHECK_IN__DUTY_CODE if is_check_in_type else CHECK_OUT__DUTY_CODE
     dutyStatus = CHECK_IN__DUTY_STATUS if is_check_in_type else CHECK_OUT__DUTY_STATUS
-    gpsLocation = '25.0307104191219,121.558177293395'
-    gpsAddress = '11052,信義區,基隆路二段 41–77'
-    payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", gpsAddress)
+    gpsLocation = f'{COMPANY_LAT},{COMPANY_LNG}'
+    payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", COMPANY_ADDRESS)
     response = requests.post(url, data=payload_xml.encode('utf-8'), headers=headers)
     if response.status_code != 200:
       msg = 'Check-in failed!' if is_check_in_type else 'Check-out failed!'
