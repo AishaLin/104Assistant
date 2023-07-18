@@ -142,8 +142,10 @@ class ProxySoarCloud(AbstractProxy):
   def is_sign_off_completed(self, form):
     # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
     check_type_element = form.find(".//TMP_CHECKTYPE")
+    employee_id_element = form.find(".//TMP_EMPLOYEEID")
+    acc = os.getenv('ACC')
     if check_type_element is not None:
-      return check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
+      return employee_id_element == acc and check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
     else:
       return False
   
