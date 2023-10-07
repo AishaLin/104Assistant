@@ -74,8 +74,12 @@ class ProxySoarCloud(AbstractProxy):
     value_element = tree.find('.//ns:Value', namespace)
     value_xml = value_element.text
     value_root = ET.fromstring(value_xml)
-    session_guid = value_root.find('.//SessionGuid').text
-    self.sessionGuid = session_guid if session_guid is not None else ''
+    result = value_root.find('.//Result').text
+    if result == 'false':
+      raise Exception('LOGIN FAIL!!')
+    else:
+      session_guid = value_root.find('.//SessionGuid').text
+      self.sessionGuid = session_guid if session_guid is not None else ''
 
   def check_in_out(self, is_check_in_type):
     url = f'{DOMAIN}/SCSService.asmx'
@@ -134,8 +138,8 @@ class ProxySoarCloud(AbstractProxy):
     payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", COMPANY_ADDRESS)
     response = requests.post(url, data=payload_xml.encode('utf-8'), headers=headers)
     if response.status_code != 200:
-      msg = 'Check-in failed!' if is_check_in_type else 'Check-out failed!'
-      self.bot_send_message(msg)
+      msg = 'CHECK IN FAILED!!' if is_check_in_type else 'CHECK OUT FAILED!!'
+      raise Exception(msg)
 
   # OoO FORM GENERAL HANDLERS
   
@@ -210,7 +214,7 @@ class ProxySoarCloud(AbstractProxy):
     tree = ET.fromstring(response.text)
     watt_elements = tree.findall('.//WATT0022500')
     if response.status_code != 200:
-      self.bot_send_message('get_finished_form_list fail!!')
+      self.bot_send_message('GET_FINISHED_FORM_LIST FAILED!!')
     return watt_elements if watt_elements is not None else []
   
   def check_today_OoO_finished_status(self, today):
