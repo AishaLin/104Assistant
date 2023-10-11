@@ -15,8 +15,11 @@ class Assistant:
     self.telegram_bot = Telegram_Bot()
     self.slack_bot = Slack_Bot()
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
-    now_tw_hour = self.get_now_tw().hour
-    self.is_working = now_tw_hour >= WORK_HOUR_START and now_tw_hour <= WORK_HOUR_END
+    now_tw = self.get_now_tw()
+    now_tw_hour = now_tw.hour
+    today_tw = now_tw.date()
+    is_workday = self.check_is_workday(today_tw)
+    self.is_working = is_workday and now_tw_hour >= WORK_HOUR_START and now_tw_hour <= WORK_HOUR_END
     self.check_in_time = ''
 
   def bot_send_message(self, msg):
