@@ -10,12 +10,15 @@ from constants import NATIONAL_HOLIDAYS, WORK_HOUR_START, WORK_HOUR_END, APP__10
 
 class Assistant:
   def __init__(self):
+    # bot and platform
     self.app = os.getenv('APP')
     self.proxy = Proxy104() if self.app == APP__104 else ProxySoarCloud()
     self.telegram_bot = Telegram_Bot()
     self.slack_bot = Slack_Bot()
     self.taiwan_tz = pytz.timezone('Asia/Taipei')
+    # init state
     now_tw = self.get_now_tw()
+    self.login(now_tw)
     now_tw_hour = now_tw.hour
     today_tw = now_tw.date()
     is_workday = self.check_is_workday(today_tw)
