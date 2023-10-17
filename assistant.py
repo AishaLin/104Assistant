@@ -6,7 +6,7 @@ from proxy104 import Proxy104
 from proxySoarCloud import ProxySoarCloud
 import time
 import os
-from constants import NATIONAL_HOLIDAYS, WORK_HOUR_START, WORK_HOUR_END, APP__104
+from constants import NATIONAL_HOLIDAYS, WORK_HOUR_START, WORK_HOUR_END, APP__104, APP__SOAR_CLOUD
 
 class Assistant:
   def __init__(self):
@@ -28,9 +28,14 @@ class Assistant:
   def bot_send_message(self, msg):
     print(msg)
     if os.getenv('TELEGRAM_BOT_TOKEN') and os.getenv('TELEGRAM_CHAT_ID'):
-      acc = os.getenv('ACC')
-      user_name = acc.split('@')[0]
-      self.telegram_bot.send_msg(f'[{user_name.upper()}] {msg}')
+      if self.app == APP__104:
+        acc = os.getenv('ACC')
+        user_name = acc.split('@')[0]
+        self.telegram_bot.send_msg(f'[{user_name.upper()}] {msg}')
+      if self.app == APP__SOAR_CLOUD:
+        user_name = os.getenv('NAME')
+        user_id = os.getenv('ACC')
+        self.telegram_bot.send_msg(f'[{user_id} | {user_name}] {msg}')
     if os.getenv('SLACK_WEBHOOK_URL'):
       self.slack_bot.send_msg(msg)
 
