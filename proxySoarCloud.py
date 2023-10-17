@@ -149,7 +149,7 @@ class ProxySoarCloud(AbstractProxy):
     employee_id_element = form.find(".//TMP_EMPLOYEEID")
     acc = os.getenv('ACC')
     if check_type_element is not None:
-      return employee_id_element == acc and check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
+      return employee_id_element.text == acc and check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
     else:
       return False
   
