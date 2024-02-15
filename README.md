@@ -1,6 +1,6 @@
 ## 功能 ##
 * 提供兩種打卡平台
-  * 104 企業大師
+  * 104 企業大師(未持續維護)
   * 飛騰雲端(default)
 * 打卡條件：
   * 只在上班日打卡；即週末、國定假日、簽核中/簽核完成之休假日，不打卡
@@ -9,19 +9,21 @@
     * 假單已抽單，會打卡
     * 假單簽核完成後申請銷假單，不管銷假單狀態是簽核中/簽核完成，皆會打卡
 
-## 須設置環境變數 ##
+## 須建立 config.py，可執行多組帳號 ##
 
-* required items for login your account
+* config.py 範例
   ```
   APP='104'/'SoarCloud'
-  ACC='account'
-  PPP='password'
-  ```
+  TELEGRAM_BOT_TOKEN = 'xxxxxxxxx'
+  TELEGRAM_CHAT_ID = 1234567
 
-* if you want to receive alert/warning from telegram (optional)
-  ```
-  TELEGRAM_BOT_TOKEN=''
-  TELEGRAM_CHAT_ID=number
+  user_list = [
+    {
+      'ACC': 'account',
+      'PPP': 'password',
+      'NAME': 'Aisha',
+    },
+  ]
   ```
 
 * if you want to receive alert/warning from slack (optional)

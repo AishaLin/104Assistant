@@ -1,10 +1,10 @@
 import requests
-import os
 import xml.etree.ElementTree as ET
 from datetime import timedelta, datetime
 from telegram_bot import Telegram_Bot
 from slack_bot import Slack_Bot
 from constants import COMPANY_LAT, COMPANY_LNG, COMPANY_ADDRESS
+from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
 
 from abstractProxy import AbstractProxy
 
@@ -20,22 +20,15 @@ OOO_WITHDRAW__CHECK_TYPE = '0'
 
 class ProxySoarCloud(AbstractProxy):
   def __init__(self):
-    self.sessionGuid = ''
     self.telegram_bot = Telegram_Bot()
     self.slack_bot = Slack_Bot()
 
-  def bot_send_message(self, msg):
+  def bot_send_message(self, msg, user_account):
     print(msg)
-    if os.getenv('TELEGRAM_BOT_TOKEN') and os.getenv('TELEGRAM_CHAT_ID'):
-      acc = os.getenv('ACC')
-      self.telegram_bot.send_msg(f'[{acc}] {msg}')
-    if os.getenv('SLACK_WEBHOOK_URL'):
-      self.slack_bot.send_msg(msg)
+    self.telegram_bot.send_msg(f'[{user_account}] {msg}')
 
-  def login(self):
+  def login(self, user_account, user_password):
     url = f'{DOMAIN}/SCSService.asmx'
-    acc = os.getenv('ACC')
-    pwd = os.getenv('PPP')
     headers = {
       "Content-Type": "application/soap+xml",
     }
@@ -67,7 +60,7 @@ class ProxySoarCloud(AbstractProxy):
         </soap12:Body>
       </soap12:Envelope>
     """
-    payload_xml = payload_xml.replace("__ACC__", str(acc)).replace("__PPP__", str(pwd))
+    payload_xml = payload_xml.replace("__ACC__", str(user_account)).replace("__PPP__", str(user_password))
     response = requests.post(url, data=payload_xml, headers=headers)
     tree = ET.fromstring(response.text)
     namespace = {'ns': 'http://scsservices.net/'}
@@ -79,9 +72,9 @@ class ProxySoarCloud(AbstractProxy):
       raise Exception('LOGIN FAIL!!')
     else:
       session_guid = value_root.find('.//SessionGuid').text
-      self.sessionGuid = session_guid if session_guid is not None else ''
+      return session_guid if session_guid is not None else ''
 
-  def check_in_out(self, is_check_in_type):
+  def check_in_out(self, is_check_in_type, user_sessionGuid):
     url = f'{DOMAIN}/SCSService.asmx'
     headers = {
       "Content-Type": "application/soap+xml",
@@ -135,7 +128,7 @@ class ProxySoarCloud(AbstractProxy):
     dutyCode = CHECK_IN__DUTY_CODE if is_check_in_type else CHECK_OUT__DUTY_CODE
     dutyStatus = CHECK_IN__DUTY_STATUS if is_check_in_type else CHECK_OUT__DUTY_STATUS
     gpsLocation = f'{COMPANY_LAT},{COMPANY_LNG}'
-    payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", COMPANY_ADDRESS)
+    payload_xml = payload_xml.replace("___SESSION_GUID___", user_sessionGuid).replace("___DUTY_CODE___", dutyCode).replace("___DUTY_STATUS___", dutyStatus).replace("___GPS_LOCATION___", gpsLocation).replace("___GPS_ADDRESS___", COMPANY_ADDRESS)
     response = requests.post(url, data=payload_xml.encode('utf-8'), headers=headers)
     if response.status_code != 200:
       msg = 'CHECK IN FAILED!!' if is_check_in_type else 'CHECK OUT FAILED!!'
@@ -143,13 +136,12 @@ class ProxySoarCloud(AbstractProxy):
 
   # OoO FORM GENERAL HANDLERS
   
-  def is_sign_off_completed(self, form):
+  def is_sign_off_completed(self, form, user_account):
     # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
     check_type_element = form.find(".//TMP_CHECKTYPE")
     employee_id_element = form.find(".//TMP_EMPLOYEEID")
-    acc = os.getenv('ACC')
     if check_type_element is not None:
-      return employee_id_element.text == acc and check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
+      return employee_id_element.text == user_account and check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
     else:
       return False
   
@@ -183,7 +175,7 @@ class ProxySoarCloud(AbstractProxy):
   
   # FINISHED FORM HANDLERS
   
-  def get_finished_form_list(self):
+  def get_finished_form_list(self, user_account, user_sessionGuid):
     url = f'{DOMAIN}/SCSService.asmx'
     headers = {
       "Content-Type": "application/soap+xml",
@@ -209,15 +201,15 @@ class ProxySoarCloud(AbstractProxy):
         </soap12:Body>
       </soap12:Envelope>
     """
-    payload_xml = payload_xml.replace("___SESSION_GUID___", self.sessionGuid)
+    payload_xml = payload_xml.replace("___SESSION_GUID___", user_sessionGuid)
     response = requests.post(url, data=payload_xml, headers=headers)
     tree = ET.fromstring(response.text)
     watt_elements = tree.findall('.//WATT0022500')
     if response.status_code != 200:
-      self.bot_send_message('GET_FINISHED_FORM_LIST FAILED!!')
+      self.bot_send_message('GET_FINISHED_FORM_LIST FAILED!!', user_account)
     return watt_elements if watt_elements is not None else []
   
-  def check_today_OoO_finished_status(self, today):
-    finishedOoORequestForms = list(filter(self.is_sign_off_completed, self.get_finished_form_list()))
+  def check_today_OoO_finished_status(self, today, user_account, user_sessionGuid):
+    finishedOoORequestForms = list(filter(lambda form: self.is_sign_off_completed(form, user_account), self.get_finished_form_list(user_account, user_sessionGuid)))
     finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
     return today in finishedOoORequestDateList, False

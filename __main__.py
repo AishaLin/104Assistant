@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 def main():
   load_dotenv()
   assistant = Assistant()
-  atexit.register(lambda: assistant.bot_send_message('bye~~ (´≖◞౪◟≖)/'))
+  atexit.register(lambda: assistant.bot_send_message('bye~~ (´≖◞౪◟≖)/'), None)
   assistant.main()
 
 if __name__ == '__main__':

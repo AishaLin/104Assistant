@@ -1,5 +1,4 @@
 import requests
-import os
 from datetime import date, timedelta
 from constants import COMPANY_LAT, COMPANY_LNG
 
@@ -18,14 +17,12 @@ class Proxy104(AbstractProxy):
   def __init__(self):
     self.jwt = ''
 
-  def login(self):
+  def login(self, user):
     url = f'{DOMAIN}/prohrm/api/login/token'
-    acc = os.getenv('ACC')
-    pwd = os.getenv('PPP')
     body = {
       "uno": "52621439",
-      "acc": acc,
-      "pwd": pwd,
+      "acc": user.account,
+      "pwd": user.password,
       "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzb3VyY2UiOiJhcHAtcHJvZCIsImNpZCI6MCwiaWF0IjoxNTUzNzUzMTQwfQ.ieJiJtNsseSO5fxNH1XTa6bqHZ0zUyoPVUYPNtOj4TM"
     }
     response = requests.post(url, json=body)
