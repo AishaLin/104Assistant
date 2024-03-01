@@ -15,8 +15,9 @@ CHECK_IN__DUTY_STATUS = '4'
 CHECK_OUT__DUTY_CODE = '8'
 CHECK_OUT__DUTY_STATUS = '5'
 
-OOO_REQUEST_COMPLETE__CHECK_TYPE = '9'
-OOO_WITHDRAW__CHECK_TYPE = '0'
+SYS__FLOW_FORM_STATUS___COMPLETE = '1'
+SYS__FLOW_FORM_STATUS___PENDING = '2'
+SYS__FLOW_FORM_STATUS___WITHDRAW = '3'
 
 class ProxySoarCloud(AbstractProxy):
   def __init__(self):
@@ -137,11 +138,11 @@ class ProxySoarCloud(AbstractProxy):
   # OoO FORM GENERAL HANDLERS
   
   def is_sign_off_completed(self, form, user_account):
-    # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
-    check_type_element = form.find(".//TMP_CHECKTYPE")
+    # judge all types as completed except SYS_FLOWFORMSTATUS 3 for now
+    form_status_element = form.find(".//SYS_FLOWFORMSTATUS")
     employee_id_element = form.find(".//TMP_EMPLOYEEID")
-    if check_type_element is not None:
-      return employee_id_element.text == str(user_account) and check_type_element.text != OOO_WITHDRAW__CHECK_TYPE
+    if form_status_element is not None:
+      return employee_id_element.text == str(user_account) and form_status_element.text != SYS__FLOW_FORM_STATUS___WITHDRAW
     else:
       return False
   
@@ -164,13 +165,14 @@ class ProxySoarCloud(AbstractProxy):
       end_date_str = watt_element.findtext("ENDDATE")
       OoO_list_per_form = self.parse_summary_text_to_date_list(start_date_str, end_date_str)
       for OoO_date in OoO_list_per_form:
-        OoO_list.add(OoO_date)
+        OoO_date_str = OoO_date.strftime("%Y-%m-%d")
+        OoO_list.add(OoO_date_str)
     return OoO_list
   
   # IN-PROGRESS FORM HANDLERS
 
   def check_today_OoO_in_progress_status(self, today):
-    # judge all types as completed except OOO_WITHDRAW__CHECK_TYPE 0 for now
+    # judge all types as completed except SYS_FLOWFORMSTATUS 3 for now
     return False, False
   
   # FINISHED FORM HANDLERS
@@ -192,7 +194,7 @@ class ProxySoarCloud(AbstractProxy):
               <SelectFields>*</SelectFields>
               <DateValue>0001-01-01T00:00:00</DateValue>
               <UserFilter>A.DataType = 1</UserFilter>
-              <SelectCount>20</SelectCount>
+              <SelectCount>200</SelectCount>
               <SelectSection>0</SelectSection>
               <SourceProgID>WATT0022500</SourceProgID>
               <SourceFieldName/>
