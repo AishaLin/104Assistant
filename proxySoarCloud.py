@@ -165,8 +165,7 @@ class ProxySoarCloud(AbstractProxy):
       end_date_str = watt_element.findtext("ENDDATE")
       OoO_list_per_form = self.parse_summary_text_to_date_list(start_date_str, end_date_str)
       for OoO_date in OoO_list_per_form:
-        OoO_date_str = OoO_date.strftime("%Y-%m-%d")
-        OoO_list.add(OoO_date_str)
+        OoO_list.add(OoO_date)
     return OoO_list
   
   # IN-PROGRESS FORM HANDLERS
