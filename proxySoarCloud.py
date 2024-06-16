@@ -212,5 +212,7 @@ class ProxySoarCloud(AbstractProxy):
   
   def check_today_OoO_finished_status(self, today, user_account, user_sessionGuid):
     finishedOoORequestForms = list(filter(lambda form: self.is_sign_off_completed(form, user_account), self.get_finished_form_list(user_account, user_sessionGuid)))
+    print(f'check_today_OoO_finished_status_____oooooo__{finishedOoORequestForms}')
     finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
+    print(f'check_today_OoO_finished_status_____xxxxxx__{finishedOoORequestDateList}')
     return today in finishedOoORequestDateList, False
