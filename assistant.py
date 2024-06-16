@@ -68,6 +68,7 @@ class Assistant:
   def handle_check_in_out(self, time, is_check_in_type, user):
     try:
       self.proxy.check_in_out(is_check_in_type, user.sessionGuid)
+      print(f'handle_check_in_out___00000___: check_in_out')
       if is_check_in_type:
         self.bot_send_message(f'check in at {time.strftime("%Y/%m/%d %a %H:%M:%S")}', user)
         user.check_in_time = time.strftime("%Y/%m/%d %H:%M:%S")
@@ -95,11 +96,13 @@ class Assistant:
     today_tw = now_tw.date()
     
     user_sessionGuid = self.login(now_tw, user.name, user.account, user.password)
+    print(f'check_in_out_if_necessary___111111___user_sessionGuid: {user_sessionGuid}')
     user.sessionGuid = user_sessionGuid
 
     is_workday = self.check_is_workday(today_tw, user.name, user.account, user_sessionGuid)
+    print(f'check_in_out_if_necessary___222222___is_workday: {is_workday}')
     is_work_enough = self.check_is_work_enough(now_tw, user)
-
+    print(f'check_in_out_if_necessary___333333___is_work_enough: {is_work_enough}')
     if is_workday:
       should_check_in = not user.is_working and now_tw.hour == WORK_HOUR_START
       should_check_out = user.is_working and now_tw.hour == WORK_HOUR_END and is_work_enough
