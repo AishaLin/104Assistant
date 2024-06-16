@@ -206,7 +206,7 @@ class ProxySoarCloud(AbstractProxy):
 
     try:
       response = requests.post(url, data=payload_xml, headers=headers, timeout=5)
-    except TimeoutError as error:
+    except requests.Timeout as error:
       self.bot_send_message(f'GET_FINISHED_FORM_LIST TIMEOUT ERROR!! {error}', user_account)
     except Exception as error:
       self.bot_send_message(f'GET_FINISHED_FORM_LIST FAILED!! {error}', user_account)
