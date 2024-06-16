@@ -175,6 +175,14 @@ class ProxySoarCloud(AbstractProxy):
     return False, False
   
   # FINISHED FORM HANDLERS
+
+  # def query_xx_data_with_retry(self, payload):
+  #   for i in range(5):
+  #     try:
+  #       response = request.post(payload.., timeout=5)
+  #     catch:
+  #       log("retying timeout")
+  #   raise Error("")
   
   def get_finished_form_list(self, user_account, user_sessionGuid):
     url = f'{DOMAIN}/SCSService.asmx'
