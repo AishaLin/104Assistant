@@ -60,7 +60,6 @@ class Assistant:
   def login(self, time, user_name, user_account, user_password):
     try:
       user_sessionGuid = self.proxy.login(user_account, user_password)
-      print(f'{user_name} login successfully!!', time.strftime("%Y/%m/%d %a %H:%M:%S"))
       return user_sessionGuid
     except Exception as error:
       self.bot_send_message(f'{user_name} LOGIN FAIL!! {error}', None)
@@ -68,7 +67,6 @@ class Assistant:
   def handle_check_in_out(self, time, is_check_in_type, user):
     try:
       self.proxy.check_in_out(is_check_in_type, user.sessionGuid)
-      print(f'handle_check_in_out___00000___: check_in_out')
       if is_check_in_type:
         self.bot_send_message(f'check in at {time.strftime("%Y/%m/%d %a %H:%M:%S")}', user)
         user.check_in_time = time.strftime("%Y/%m/%d %H:%M:%S")
@@ -96,13 +94,11 @@ class Assistant:
     today_tw = now_tw.date()
     
     user_sessionGuid = self.login(now_tw, user.name, user.account, user.password)
-    print(f'check_in_out_if_necessary___111111___user_sessionGuid: {user_sessionGuid}')
     user.sessionGuid = user_sessionGuid
 
     is_workday = self.check_is_workday(today_tw, user.name, user.account, user_sessionGuid)
-    print(f'check_in_out_if_necessary___222222___is_workday: {is_workday}')
     is_work_enough = self.check_is_work_enough(now_tw, user)
-    print(f'check_in_out_if_necessary___333333___is_work_enough: {is_work_enough}')
+
     if is_workday:
       should_check_in = not user.is_working and now_tw.hour == WORK_HOUR_START
       should_check_out = user.is_working and now_tw.hour == WORK_HOUR_END and is_work_enough
@@ -117,9 +113,7 @@ class Assistant:
       now_tw_hour = now_tw.hour
       today_tw = now_tw.date()
       user_sessionGuid = self.login(now_tw, user['NAME'], user['ACC'], user['PPP'])
-      print(f'create_users______user_sessionGuid: {user_sessionGuid}')
       is_workday = self.check_is_workday(today_tw, user['NAME'], user['ACC'], user_sessionGuid)
-      print(f'create_users______is_workday: {is_workday}')
       is_working = is_workday and now_tw_hour >= WORK_HOUR_START and now_tw_hour <= WORK_HOUR_END
       users.append(User(user['ACC'], user['PPP'], user['NAME'], is_working, user_sessionGuid))
     return users

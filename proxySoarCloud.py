@@ -140,9 +140,7 @@ class ProxySoarCloud(AbstractProxy):
   def is_sign_off_completed(self, form, user_account):
     # judge all types as completed except SYS_FLOWFORMSTATUS 3 for now
     form_status_element = form.find(".//SYS_FLOWFORMSTATUS")
-    print(f'is_sign_off_completed_____oooooo__{form_status_element}')
     employee_id_element = form.find(".//TMP_EMPLOYEEID")
-    print(f'is_sign_off_completed_____xxxxxx__{employee_id_element}')
     if form_status_element is not None:
       return employee_id_element.text == str(user_account) and form_status_element.text != SYS__FLOW_FORM_STATUS___WITHDRAW
     else:
@@ -184,7 +182,6 @@ class ProxySoarCloud(AbstractProxy):
       "Content-Type": "application/soap+xml",
       "Connection": "keep-alive"
     }
-    print(f'get_finished_form_list_____iiiiii___{user_account}__{user_sessionGuid}')
     payload_xml = """
       <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
         <soap12:Body>
@@ -206,21 +203,21 @@ class ProxySoarCloud(AbstractProxy):
       </soap12:Envelope>
     """
     payload_xml = payload_xml.replace("___SESSION_GUID___", user_sessionGuid)
-    print(f'get_finished_form_list_____iiiiii___payload_xml___{payload_xml}')
-    response = requests.post(url, data=payload_xml, headers=headers)
-    print(f'get_finished_form_list_____oooooo__response___{response}')
+
+    try:
+      response = requests.post(url, data=payload_xml, headers=headers, timeout=5)
+    except TimeoutError as error:
+      self.bot_send_message(f'GET_FINISHED_FORM_LIST TIMEOUT ERROR!! {error}', user_account)
+    except Exception as error:
+      self.bot_send_message(f'GET_FINISHED_FORM_LIST FAILED!! {error}', user_account)
+
     tree = ET.fromstring(response.text)
     watt_elements = tree.findall('.//WATT0022500')
-    print(f'get_finished_form_list_____oooooo__tree___{tree}')
-    print(f'get_finished_form_list_____oooooo__watt_elements___{watt_elements}')
-    print(f'get_finished_form_list_____oooooo___response.status_code__{response.status_code}')
     if response.status_code != 200:
       self.bot_send_message('GET_FINISHED_FORM_LIST FAILED!!', user_account)
     return watt_elements if watt_elements is not None else []
   
   def check_today_OoO_finished_status(self, today, user_account, user_sessionGuid):
     finishedOoORequestForms = list(filter(lambda form: self.is_sign_off_completed(form, user_account), self.get_finished_form_list(user_account, user_sessionGuid)))
-    print(f'check_today_OoO_finished_status_____oooooo__{finishedOoORequestForms}')
     finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
-    print(f'check_today_OoO_finished_status_____xxxxxx__{finishedOoORequestDateList}')
     return today in finishedOoORequestDateList, False
