@@ -184,6 +184,7 @@ class ProxySoarCloud(AbstractProxy):
       "Content-Type": "application/soap+xml",
       "Connection": "keep-alive"
     }
+    print(f'get_finished_form_list_____iiiiii___{user_account}__{user_sessionGuid}')
     payload_xml = """
       <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
         <soap12:Body>
@@ -205,10 +206,11 @@ class ProxySoarCloud(AbstractProxy):
       </soap12:Envelope>
     """
     payload_xml = payload_xml.replace("___SESSION_GUID___", user_sessionGuid)
+    print(f'get_finished_form_list_____iiiiii___payload_xml___{payload_xml}')
     response = requests.post(url, data=payload_xml, headers=headers)
+    print(f'get_finished_form_list_____oooooo__response___{response}')
     tree = ET.fromstring(response.text)
     watt_elements = tree.findall('.//WATT0022500')
-    print(f'get_finished_form_list_____oooooo__response___{response}')
     print(f'get_finished_form_list_____oooooo__tree___{tree}')
     print(f'get_finished_form_list_____oooooo__watt_elements___{watt_elements}')
     print(f'get_finished_form_list_____oooooo___response.status_code__{response.status_code}')
