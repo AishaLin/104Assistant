@@ -60,6 +60,7 @@ class Assistant:
   def login(self, time, user_name, user_account, user_password):
     try:
       user_sessionGuid = self.proxy.login(user_account, user_password)
+      print(f'{user_name} login successfully!!', time.strftime("%Y/%m/%d %a %H:%M:%S"))
       return user_sessionGuid
     except Exception as error:
       self.bot_send_message(f'{user_name} LOGIN FAIL!! {error}', None)
