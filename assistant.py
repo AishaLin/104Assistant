@@ -117,7 +117,9 @@ class Assistant:
       now_tw_hour = now_tw.hour
       today_tw = now_tw.date()
       user_sessionGuid = self.login(now_tw, user['NAME'], user['ACC'], user['PPP'])
+      print(f'create_users______user_sessionGuid: {user_sessionGuid}')
       is_workday = self.check_is_workday(today_tw, user['NAME'], user['ACC'], user_sessionGuid)
+      print(f'create_users______is_workday: {is_workday}')
       is_working = is_workday and now_tw_hour >= WORK_HOUR_START and now_tw_hour <= WORK_HOUR_END
       users.append(User(user['ACC'], user['PPP'], user['NAME'], is_working, user_sessionGuid))
     return users
