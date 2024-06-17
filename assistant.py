@@ -97,8 +97,7 @@ class Assistant:
     user.sessionGuid = user_sessionGuid
 
     if user.is_workday:
-      print(f'{user.name} is_working')
-      # self.handle_check_in_out(now_tw, now_tw.hour == WORK_HOUR_START, user)
+      self.handle_check_in_out(now_tw, now_tw.hour == WORK_HOUR_START, user)
 
     # now_tw = self.get_now_tw()
     # today_tw = now_tw.date()
@@ -115,6 +114,10 @@ class Assistant:
     #   if should_check_in or should_check_out:
     #     self.handle_check_in_out(now_tw, should_check_in, user)
     #     user.is_working = not user.is_working
+      
+  def random_sleep(self, min_s, max_s):
+    random_int = random.randint(min_s, max_s)
+    time.sleep(random_int)
 
   def create_users(self):
     users = []
@@ -126,17 +129,17 @@ class Assistant:
       is_workday = self.check_is_workday(today_tw, user['NAME'], user['ACC'], user_sessionGuid)
       # is_working = is_workday and now_tw_hour >= WORK_HOUR_START and now_tw_hour <= WORK_HOUR_END
       users.append(User(user['ACC'], user['PPP'], user['NAME'], is_workday, user_sessionGuid))
+      self.random_sleep(10, 30)
     return users
 
   def main(self):
     self.bot_send_message(f'Hi, your {self.app} check-in bot has started work at {self.get_now_tw().strftime("%Y/%m/%d %a %H:%M:%S")}', None)
     users = self.create_users()
-    random_int = random.randint(0, 120)
-    time.sleep(random_int)
     # while True:
     for user in users:
       try:
         self.check_in_out_if_necessary(user)
+        self.random_sleep(30, 90)
       except Exception as e:
         print(e)
         self.bot_send_message(f'What the (☉д⊙)", {e}', user)
