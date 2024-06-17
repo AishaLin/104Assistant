@@ -5,6 +5,7 @@ from telegram_bot import Telegram_Bot
 from slack_bot import Slack_Bot
 from constants import COMPANY_LAT, COMPANY_LNG, COMPANY_ADDRESS
 from config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+import backoff
 
 from abstractProxy import AbstractProxy
 
@@ -183,6 +184,10 @@ class ProxySoarCloud(AbstractProxy):
   #     catch:
   #       log("retying timeout")
   #   raise Error("")
+
+  @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=5)
+  def post_url(self, url, data, headers):
+    return requests.post(url, data, headers, timeout=5)
   
   def get_finished_form_list(self, user_account, user_sessionGuid):
     url = f'{DOMAIN}/SCSService.asmx'
@@ -212,10 +217,7 @@ class ProxySoarCloud(AbstractProxy):
     """
     payload_xml = payload_xml.replace("___SESSION_GUID___", user_sessionGuid)
 
-    try:
-      response = requests.post(url, data=payload_xml, headers=headers, timeout=5)
-    except Exception as error:
-      self.bot_send_message(f'GET_FINISHED_FORM_LIST FAILED!! ERROR MSG: {error}', user_account)
+    response = self.post_url(url, payload_xml, headers)
 
     tree = ET.fromstring(response.text)
     watt_elements = tree.findall('.//WATT0022500')
