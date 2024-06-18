@@ -143,7 +143,7 @@ class Assistant:
     for user in users:
       try:
         self.check_in_out_if_necessary(user)
-        self.random_sleep(30, 120)
+        self.random_sleep(30, 100)
       except Exception as e:
         print(e)
         self.bot_send_message(f'What the (☉д⊙)", {e}', user)
