@@ -3,7 +3,7 @@ from datetime import date
 APP__104 = '104'
 APP__SOAR_CLOUD = 'SoarCloud'
 
-WORK_HOUR_START = 10
+WORK_HOUR_START = 9
 WORK_HOUR_END = 19
 
 COMPANY_LAT = 25.039322060995
