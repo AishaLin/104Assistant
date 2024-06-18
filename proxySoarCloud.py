@@ -186,14 +186,13 @@ class ProxySoarCloud(AbstractProxy):
   #   raise Error("")
 
   @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=5)
-  def post_url(self, url, data, headers):
-    return requests.post(url, data, headers, timeout=5)
+  def post_url(self, url, payload_xml, headers):
+    return requests.post(url, data=payload_xml, headers=headers, timeout=5)
   
   def get_finished_form_list(self, user_account, user_sessionGuid):
     url = f'{DOMAIN}/SCSService.asmx'
     headers = {
-      "Content-Type": "application/soap+xml",
-      "Connection": "keep-alive"
+      "Content-Type": "application/soap+xml; charset=utf-8",
     }
     payload_xml = """
       <soap12:Envelope xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://www.w3.org/2003/05/soap-envelope">
@@ -219,10 +218,12 @@ class ProxySoarCloud(AbstractProxy):
 
     response = self.post_url(url, payload_xml, headers)
 
-    tree = ET.fromstring(response.text)
-    watt_elements = tree.findall('.//WATT0022500')
     if response.status_code != 200:
       self.bot_send_message('GET_FINISHED_FORM_LIST FAILED!!', user_account)
+      return []
+
+    tree = ET.fromstring(response.text)
+    watt_elements = tree.findall('.//WATT0022500')
     return watt_elements if watt_elements is not None else []
   
   def check_today_OoO_finished_status(self, today, user_account, user_sessionGuid):
