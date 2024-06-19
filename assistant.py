@@ -88,6 +88,8 @@ class Assistant:
 
     if should_check_in or should_check_out:
       self.handle_check_in_out(now_tw, should_check_in, user)
+    else:
+      self.bot_send_message(f'*٩(◕‿◕｡)۶✿ﾟ‘ﾟ･.｡✧ Yippee!*', user)
 
 
   def random_sleep(self, min_s, max_s):
@@ -103,7 +105,7 @@ class Assistant:
       today_tw = now_tw.date()
       user_sessionGuid = self.login(now_tw, user['NAME'], user['ACC'], user['PPP'])
       is_workday = self.check_is_workday(today_tw, user['NAME'], user['ACC'], user_sessionGuid)
-      users.append(User(user['ACC'], user['PPP'], user['NAME'], is_workday, user_sessionGuid))
+      users.append(User(user['ACC'], user['PPP'], user['NAME'], is_workday, user_sessionGuid, user['SLACK_WEBHOOK_URL']))
       self.random_sleep(0, 10)
     return users
 
