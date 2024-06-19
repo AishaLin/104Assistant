@@ -177,19 +177,11 @@ class ProxySoarCloud(AbstractProxy):
   
   # FINISHED FORM HANDLERS
 
-  # def query_xx_data_with_retry(self, payload):
-  #   for i in range(5):
-  #     try:
-  #       response = request.post(payload.., timeout=5)
-  #     catch:
-  #       log("retying timeout")
-  #   raise Error("")
-
   @backoff.on_exception(backoff.expo, requests.exceptions.RequestException, max_tries=5)
   def post_url(self, url, payload_xml, headers):
     return requests.post(url, data=payload_xml, headers=headers, timeout=5)
   
-  def get_finished_form_list(self, user_account, user_sessionGuid):
+  def get_finished_OoO_form_list(self, user_account, user_sessionGuid):
     url = f'{DOMAIN}/SCSService.asmx'
     headers = {
       "Content-Type": "application/soap+xml; charset=utf-8",
@@ -219,7 +211,7 @@ class ProxySoarCloud(AbstractProxy):
     response = self.post_url(url, payload_xml, headers)
 
     if response.status_code != 200:
-      self.bot_send_message('GET_FINISHED_FORM_LIST FAILED!!', user_account)
+      self.bot_send_message('get_finished_OoO_form_list response error!!', user_account)
       return []
 
     tree = ET.fromstring(response.text)
@@ -227,6 +219,6 @@ class ProxySoarCloud(AbstractProxy):
     return watt_elements if watt_elements is not None else []
   
   def check_today_OoO_finished_status(self, today, user_account, user_sessionGuid):
-    finishedOoORequestForms = list(filter(lambda form: self.is_sign_off_completed(form, user_account), self.get_finished_form_list(user_account, user_sessionGuid)))
+    finishedOoORequestForms = list(filter(lambda form: self.is_sign_off_completed(form, user_account), self.get_finished_OoO_form_list(user_account, user_sessionGuid)))
     finishedOoORequestDateList = self.get_OoO_date_list_from_forms(finishedOoORequestForms)
     return today in finishedOoORequestDateList, False

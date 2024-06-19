@@ -7,6 +7,5 @@ class User:
 
     # init state
     self.is_workday = is_workday
-    self.check_in_time = ''
     self.sessionGuid = user_sessionGuid
         

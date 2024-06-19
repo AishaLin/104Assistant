@@ -3,24 +3,25 @@ from datetime import date
 APP__104 = '104'
 APP__SOAR_CLOUD = 'SoarCloud'
 
-WORK_HOUR_START = 9
-WORK_HOUR_END = 19
-
-COMPANY_LAT = 25.039322060995
-COMPANY_LNG = 121.550341875807
-COMPANY_ADDRESS = '10688,大安區,安和路一段21巷2'
+COMPANY_LAT = 25.0565261
+COMPANY_LNG = 121.5458825
+COMPANY_ADDRESS = '105,松山區,敦化北路168號'
 
 NATIONAL_HOLIDAYS = set([
-  date(2024, 2, 8),
-  date(2024, 2, 9),
-  date(2024, 2, 12),
-  date(2024, 2, 13),
-  date(2024, 2, 14),
-  date(2024, 2, 28),
-  date(2024, 4, 4),
-  date(2024, 4, 5),
-  date(2024, 6, 10),
   date(2024, 9, 17),
   date(2024, 10, 10),
   date(2025, 1, 1),
+  date(2025, 1, 27),
+  date(2025, 1, 28),
+  date(2025, 1, 29),
+  date(2025, 1, 30),
+  date(2025, 1, 31),
+  date(2025, 2, 28),
+  date(2025, 4, 3),
+  date(2025, 4, 4),
+  date(2025, 5, 1),
+  date(2025, 5, 30),
+  date(2025, 10, 6),
+  date(2025, 10, 10),
+  date(2026, 1, 1),
 ])
