@@ -65,8 +65,9 @@
         crontab -e
 
         # 排程範例
-        40 9 * * 1-5 /usr/bin/python3 /home/ubuntu/104Assistant/__main__.py >> /home/ubuntu/104Assistant/cron_output.log 2>&1
-        0 19 * * 1-5 /usr/bin/python3 /home/ubuntu/104Assistant/__main__.py >> /home/ubuntu/104Assistant/cron_output.log 2>&1
+        # 為了實現自然的打卡時間且避免太過頻繁發 request，user 間有 random sleep，起迄時間建議 8hr 再 + 10 分鐘 buffer
+        57 9 * * 1-5 /usr/bin/python3 /home/ubuntu/104Assistant/__main__.py >> /home/ubuntu/104Assistant/cron_output.log 2>&1
+        07 19 * * 1-5 /usr/bin/python3 /home/ubuntu/104Assistant/__main__.py >> /home/ubuntu/104Assistant/cron_output.log 2>&1
         ```
     * 查看自己的 crontab
         ```
