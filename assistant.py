@@ -106,7 +106,7 @@ class Assistant:
       user_sessionGuid = self.login(now_tw, user['NAME'], user['ACC'], user['PPP'])
       is_workday = self.check_is_workday(today_tw, user['NAME'], user['ACC'], user_sessionGuid)
       users.append(User(user['ACC'], user['PPP'], user['NAME'], is_workday, user_sessionGuid, user['SLACK_WEBHOOK_URL']))
-      self.random_sleep(0, 50 / len(users))
+      self.random_sleep(0, 50 // len(user_list))
     return users
 
 
@@ -116,7 +116,7 @@ class Assistant:
 
     for user in users:
       try:
-        self.random_sleep(5, 500 / len(users))
+        self.random_sleep(5, 500 // len(users))
         self.check_in_out_if_necessary(user)
       except Exception as e:
         print(e)
