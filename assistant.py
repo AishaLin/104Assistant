@@ -114,7 +114,7 @@ class Assistant:
     self.bot_send_message(f'Hi, your {self.app} check-in bot started working at {self.get_now_tw().strftime("%Y/%m/%d %a %H:%M:%S")}', None)
     users = self.create_users()
 
-    for index, user in users:
+    for index, user in enumerate(users):
       try:
         self.check_in_out_if_necessary(user)
         if index < len(user) - 1:
