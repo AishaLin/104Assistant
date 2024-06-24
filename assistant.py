@@ -117,7 +117,7 @@ class Assistant:
     for index, user in enumerate(users):
       try:
         self.check_in_out_if_necessary(user)
-        if index < len(user) - 1:
+        if index < len(users) - 1:
           self.random_sleep(5, 500 // len(users))
       except Exception as e:
         print(e)
