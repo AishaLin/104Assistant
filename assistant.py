@@ -114,10 +114,11 @@ class Assistant:
     self.bot_send_message(f'Hi, your {self.app} check-in bot started working at {self.get_now_tw().strftime("%Y/%m/%d %a %H:%M:%S")}', None)
     users = self.create_users()
 
-    for user in users:
+    for index, user in users:
       try:
-        self.random_sleep(5, 500 // len(users))
         self.check_in_out_if_necessary(user)
+        if index < len(user) - 1:
+          self.random_sleep(5, 500 // len(users))
       except Exception as e:
         print(e)
         self.bot_send_message(f'What the (☉д⊙)", {e}', user)
